@@ -2,7 +2,7 @@
 
 This document is a record of how I set up the app594 project; students do not need to do this.
 
-Here is a record of useful docs.
+Here is a list of useful docs.
 
 - [Managing Multiple Environments for an App](https://devcenter.heroku.com/articles/multiple-environments)
 - [Creating Apps from the CLI](https://devcenter.heroku.com/articles/creating-apps)
@@ -116,6 +116,11 @@ Commit to the master branch, push to github.
 
 ## Deploy into the staging environment
 
+    git push staging master
+
+Allocate a single web dyno. Anymore costs money.
+
+    heroku ps:scale web=1
 
 
 

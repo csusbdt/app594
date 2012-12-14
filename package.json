@@ -1,5 +1,5 @@
 {
-    "name": "CSE 594 app594",
+    "name": "app594",
     "version": "0.0.1",
     "description": "App illustrating MongoLab, Nodejs, Heroku, Facebook integration",
     "dependencies": {
