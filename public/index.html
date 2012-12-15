@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>App 594</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Example App for CSE 594">
+    <meta name="author" content="David Turner">
+    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="ico/apple-touch-icon-57-precomposed.png">
+    <link rel="shortcut icon" href="ico/favicon.png">
+    <style>
+      body {
+        padding-top: 60px;
+      }
+    </style>
+    <link href="css/bootstrap-responsive.css" rel="stylesheet">
+  </head>
+  <body>
+    <div id="fb-root"></div>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="#">Project name</a>
+          <div class="nav-collapse collapse">
+            <ul class="nav">
+              <li class="active"><a href="#">Home</a></li>
+              <li><a href="#about">About</a></li>
+              <li><a href="#contact">Contact</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+	
+  <div class="container">
+
+    <div class="row">
+      <div class="span5">
+        <p>
+          This site implements the process for the scenario titled 
+          <i>My site only uses Facebook for Registration</i> described in
+          <a href="https://developers.facebook.com/docs/user_registration/flows/">User Registration Flows</a>.
+        </p>
+      </div>
+    </div>
+
+    <button onclick="login()">login</button>
+<!--
+	<div>
+		<fb:login-button
+			registration-url="https://developers.facebook.com/docs/user_registration" 
+			on-login="console.log(arguments)"
+		/>
+	</div>
+-->
+  </div>
+  
+	<script>
+		function login() {
+			FB.login(function(response) {
+				if (response.authResponse) {
+					FB.api('/me', function(response) {
+						alert('Welcome, ' + response.name + '.');
+					});
+				} else {
+					alert('Authorization canceled.');
+				}
+			});
+		}
+
+	  window.fbAsyncInit = function() {
+		FB.init({
+		  appId      : '433935356668511',
+		  channelUrl : '//localhost:5000/channel.html',
+		  status     : true, // Check the login status upon init.
+		  cookie     : true, // Set session cookies to allow your server to access the session.
+		  xfbml      : true  // Parse XFBML tags on this page.
+		});
+/*
+		function login() {
+			FB.login(function(response) {
+				if (response.authResponse) {
+					FB.api('/me', function(response) {
+						alert('Welcome, ' + response.name + '.');
+					});
+				} else {
+					alert('Authorization canceled.');
+				}
+			});
+		}
+*/
+// resume from https://developers.facebook.com/docs/howtos/login/getting-started/
+
+      FB.getLoginStatus(function(response) {
+        if (response.status === 'connected') {
+          alert('connected');
+        } else if (response.status === 'not_authorized') {
+          login();
+        } else {
+          login();
+        }
+      });
+		
+        // The auth.login event fires when the user logs in using the Login button.
+        FB.Event.subscribe('auth.login', function(response) {
+          // We want to reload the page now so the server-side script 
+          // can read the cookie set by the Facebook Javascript. 
+          // But we don't want to use
+          // window.location.reload() because if this is in a canvas there was a
+          // post made to this page and a reload will trigger a message to the
+          // user asking if they want to send data again.
+//          window.location = window.location;
+alert('user logged in');
+        });
+        
+        //FB.Canvas.setAutoGrow();
+	
+	  };
+	
+	  // Load the SDK's source Asynchronously.
+	  // Note that the debug version is being actively developed and might 
+	  // contain some type checks that are overly strict. 
+	  // Please report such bugs using the bugs tool.
+	  (function(d, debug){
+		 var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
+		 if (d.getElementById(id)) {return;}
+		 js = d.createElement('script'); js.id = id; js.async = true;
+		 js.src = "//connect.facebook.net/en_US/all" + (debug ? "/debug" : "") + ".js";
+		 ref.parentNode.insertBefore(js, ref);
+	   }(document, false));
+	</script>
+
+<!--
+	<script src="js/jquery-1.8.3.min.js"></script>
+	<script src="js/localStorage.js"></script>
+	<script type="text/javascript">
+		$(function() {
+			appState = localStorage.getItem('appState') || { text: 'not set' };
+//			localStorage.setItem('appState', appState);
+		});
+	</script>
+-->
+
+    </body>
+</html>

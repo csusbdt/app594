@@ -1,4 +1,4 @@
-# app594
+	# app594
 
 ## Overview 
 
@@ -12,6 +12,8 @@ The project is setup to resemble a professional development environment, with de
 
 - To learn about git, read [Pro Git](http://git-scm.com/book).
 - To learn about the development environment, read [The Twelve-Factor App](http://www.12factor.net/).
+- To learn about facebook integration, read [the Facebook developer docs](https://developers.facebook.com/docs/).
+- Forserver-side authentication that includes a large number of identity providers, see [everyauth](http://everyauth.com/).
 
 ## Development environment
 
@@ -23,6 +25,37 @@ The project is setup to resemble a professional development environment, with de
 - Have a Heroku account and install the Heroku toolbelt.
 - Have a MongoLab account.
 
+## Fork app594
+
+Maybe the easiest way to work is for each developer to fork the app594 project and then clone the forked repository.  Then I can merge from their forked repositories.
+
+## Local setup
+
 Run the following to clone the remote repository.
 
-    git clone https://github.com/csusbdt/app594.git
+    git clone https://github.com/csusbdt/app594.git (or FORKED REPO)
+
+Install dependencies.
+
+    cd app594
+    npm install
+
+Start local instance of the app.
+
+    foreman start
+
+Check that the app is running by going to the following URL in a browser.
+
+    http://localhost:5000/
+
+
+## Module documentation
+
+- [express](http://expressjs.com/)
+- [asynch](https://github.com/caolan/async) may not use
+- [faceplate](https://github.com/heroku/faceplate)
+
+## Notes
+
+- The iPhone screen dimensions are 320 by 480.
+

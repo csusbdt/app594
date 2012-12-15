@@ -3,10 +3,11 @@
     "version": "0.0.1",
     "description": "App illustrating MongoLab, Nodejs, Heroku, Facebook integration",
     "dependencies": {
-        "express": "2.5.x"
+        "express": "3.0.4",
+        "faceplate": "0.4.0"
     },
     "engines": {
-        "node": "0.8.x",
-        "npm": "1.1.x"
+        "node": "0.8.14",
+        "npm": "1.1.65"
     }
 }
