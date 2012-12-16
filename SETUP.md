@@ -170,7 +170,7 @@ Test the staged app by going to the following url in a browser.
 
 Go to https://developers.facebook.com/apps and create a new app named app594d. 
 
-For the app display name, use "App 594 Development Version." 
+For the app display name, use "App 594d." 
 
 For the app namespace, use `app-five-ninety-four-d`. 
 
@@ -182,27 +182,164 @@ Under the integration options, select _Website with Facebook Login_ and use the 
 
     http://localhost:5000/
 
-Create a folder called public.  In this folder, create a file named `channel.html` with the following contents.
+Determine the latest version number for ejs.
 
-````
-<script src="//connect.facebook.net/en_US/all.js"></script>
-````
+    npm info ejs version
 
-In the public folder, create a file named `index.html` with the following contents.
+Edit `package.json` to include ejs.  Install ejs locally.
 
-````
-
-````
+    npm install
 
 Change the contents of `web.js` to the following. 
 
 ````
+var express = require('express');
+var app = express();
+var port = process.env.PORT || 5000;
+var indexHtml = 'Starting server. Please try again.';
 
+require('fs').readFile('index.ejs', 'utf8', function(err, file) {
+  if (err) {
+    console.log(err);
+    indexHtml = err;
+  } else {
+    indexHtml = require('ejs').render(file, {
+      locals: { 
+        appId: process.env.FACEBOOK_APP_ID
+      }
+    });
+  }
+});
+
+app.get('/', function(req, res) {
+  res.send(indexHtml);
+});
+
+// Return channel.html with one-year cache duration.
+app.get('/channel.html', function(req, res) {
+  var body = '<script src="//connect.facebook.net/en_US/all.js"></script>';
+  res.set({
+  	'Content-Type': 'text/html',
+  	'Content-Length': body.length,
+  	'Pragma': 'public',
+  	'Cache-Control': 'max-age=31536000',
+    'Expires': new Date(Date.now() + 31536000).toUTCString()
+  });
+  res.end(body);
+});
+
+app.use(express.static(__dirname + '/public'));
+
+app.use(function(err, req, res, next){
+  console.error(err.stack);
+  res.send(500, err.stack);
+});
+
+app.listen(port, function() {
+  console.log("Listening on " + port);
+});
 ````
 
+Create file `.env` with the following contents; foreman will use this to modify the environment.
+
+    FACEBOOK_APP_ID=433935356668511
+
+Because this setting is only for local development deployment, and because other developers will set a different value, omit `.env` from repository by adding to `.gitignore`.
+
+Create folder `public/js` and place a copy of jquery into it.
+
+Create a file named `index.ejs` with the following contents.
+
+````
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>App 594</title>
+  </head>
+  <body>
+    <div id="fb-root"></div>
+    <p>
+      This site implements the process for the scenario titled 
+      <i>My site only uses Facebook for Registration</i> described in
+      <a href="https://developers.facebook.com/docs/user_registration/flows/">User Registration Flows</a>.
+    </p>
+
+    <div id="msg"></div>
+
+    <button id="login" onclick="login()" style="display: none">Login</button>
+
+    <script src="js/jquery-1.8.3.min.js"></script>
+    <script>
+      function login() {
+        FB.login(function(response) {
+          if (response.authResponse) {
+            FB.api('/me', function(response) {
+              $('#login').hide();
+              $('#msg').html('Hello, ' + response.name + '.');
+            });
+          } else {
+              $('#msg').html('Authorization cancelled.');
+          }
+        });
+      }
+
+      window.fbAsyncInit = function() {
+        FB.init({
+          appId      : '<%= appId %>',
+          channelUrl : '://' + window.location.host + '/channel.html',
+          status     : true,  // Check the login status upon init.
+          cookie     : true,  // Set session cookies to allow your server to access the session.
+          xfbml      : false  // Parse XFBML tags on this page.
+        });
+        FB.getLoginStatus(function(response) {
+          if (response.status === 'connected') {
+            $('#msg').html('Welcome back.');
+          } else {
+            $('#login').show();
+          }
+        });
+      };
+    
+      // Load the SDK's source Asynchronously.
+      (function(d){
+         var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
+         if (d.getElementById(id)) {return;}
+         js = d.createElement('script'); js.id = id; js.async = true;
+         js.src = "//connect.facebook.net/en_US/all.js";
+         ref.parentNode.insertBefore(js, ref);
+       }(document));
+    </script>
+
+  </body>
+</html>
+````
+Run server and test with a browser.
+
+    foreman start
+
+Go to http://localhost:5000/ in a browser.
 
 
+## Create a Facebook app for staging
 
+Go to https://developers.facebook.com/apps and create a new app named app594s. 
+
+For the app display name, use "App 594s." 
+
+For the app namespace, use `app-five-ninety-four-s`. 
+
+For the app domain, use `app594s.herokuapp.com`.
+
+Enable sandbox mode so that only developers will be able to use the app.
+
+Under the integration options, select _Website with Facebook Login_ and use the following for the site url.
+
+    http://app594s.herokuapp.com/
+
+TO BE CONTINUED
+
+heroku config:add FACEBOOK_APP_ID=12345
 
 
 

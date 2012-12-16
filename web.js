@@ -1,16 +1,26 @@
 var express = require('express');
-
 var app = express();
+var port = process.env.PORT || 5000;
+var indexHtml = 'Starting server. Please try again.';
 
-//app.use(express.bodyParser());
-//app.use(express.cookieParser());
+require('fs').readFile('index.ejs', 'utf8', function(err, file) {
+  if (err) {
+    console.log(err);
+    indexHtml = err;
+  } else {
+    indexHtml = require('ejs').render(file, {
+      locals: { 
+        appId: process.env.FACEBOOK_APP_ID
+      }
+    });
+  }
+});
 
-//app.use(require('faceplate').middleware({
-//  app_id: process.env.FACEBOOK_APP_ID,
-//  secret: process.env.FACEBOOK_SECRET,
-//  scope:  'user_likes,user_photos,user_photo_video_tags'
-//}));
+app.get('/', function(req, res) {
+  res.send(indexHtml);
+});
 
+// Return channel.html with one-year cache duration.
 app.get('/channel.html', function(req, res) {
   var body = '<script src="//connect.facebook.net/en_US/all.js"></script>';
   res.set({
@@ -27,11 +37,9 @@ app.use(express.static(__dirname + '/public'));
 
 app.use(function(err, req, res, next){
   console.error(err.stack);
-  res.send(500, 'Something broke!');
+  res.send(500, err.stack);
 });
 
-var port = process.env.PORT || 5000;
 app.listen(port, function() {
   console.log("Listening on " + port);
 });
-
