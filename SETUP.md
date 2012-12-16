@@ -260,6 +260,8 @@ App Secret:	f84820a6e277584e519f560430349fd4
 
 
 
+look at http://ckrack.github.com/fbootstrapp/
+
 
 
 ## Add MongoDB support

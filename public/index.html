@@ -44,114 +44,98 @@
         </div>
       </div>
     </div>
-	
-  <div class="container">
+    
+    <div class="container">
 
-    <div class="row">
-      <div class="span5">
-        <p>
-          This site implements the process for the scenario titled 
-          <i>My site only uses Facebook for Registration</i> described in
-          <a href="https://developers.facebook.com/docs/user_registration/flows/">User Registration Flows</a>.
-        </p>
+      <div class="row">
+        <div class="span5">
+          <p>
+            This site implements the process for the scenario titled 
+            <i>My site only uses Facebook for Registration</i> described in
+            <a href="https://developers.facebook.com/docs/user_registration/flows/">User Registration Flows</a>.
+          </p>
+        </div>
       </div>
+
+      <button id="login"    onclick="login()" style="display: none">Login</button>
+      <button id="register" onclick="login()" style="display: none">Register</button>
+
     </div>
 
-    <button onclick="login()">login</button>
-<!--
-	<div>
-		<fb:login-button
-			registration-url="https://developers.facebook.com/docs/user_registration" 
-			on-login="console.log(arguments)"
-		/>
-	</div>
--->
-  </div>
-  
-	<script>
-		function login() {
-			FB.login(function(response) {
-				if (response.authResponse) {
-					FB.api('/me', function(response) {
-						alert('Welcome, ' + response.name + '.');
-					});
-				} else {
-					alert('Authorization canceled.');
-				}
-			});
-		}
+    <div class="alert">
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+      <p id="alert"></p>
+    </div>
 
-	  window.fbAsyncInit = function() {
-		FB.init({
-		  appId      : '433935356668511',
-		  channelUrl : '//localhost:5000/channel.html',
-		  status     : true, // Check the login status upon init.
-		  cookie     : true, // Set session cookies to allow your server to access the session.
-		  xfbml      : true  // Parse XFBML tags on this page.
-		});
-/*
-		function login() {
-			FB.login(function(response) {
-				if (response.authResponse) {
-					FB.api('/me', function(response) {
-						alert('Welcome, ' + response.name + '.');
-					});
-				} else {
-					alert('Authorization canceled.');
-				}
-			});
-		}
-*/
-// resume from https://developers.facebook.com/docs/howtos/login/getting-started/
-
-      FB.getLoginStatus(function(response) {
-        if (response.status === 'connected') {
-          alert('connected');
-        } else if (response.status === 'not_authorized') {
-          login();
-        } else {
-          login();
-        }
-      });
-		
+    <script src="js/jquery-1.8.3.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>  
+    <script>
+      // See https://developers.facebook.com/docs/howtos/login/getting-started/
+      function login() {
+        FB.login(function(response) {
+          if (response.authResponse) {
+            FB.api('/me', function(response) {
+              $('#alert').html('Hello, ' + response.name + '.');
+            });
+          } else {
+              $('#alert').html('Authorization cancelled.');
+          }
+        });
+      }
+      
+      window.fbAsyncInit = function() {
+        FB.init({
+          appId      : '433935356668511',
+          channelUrl : '//localhost:5000/channel.html',
+          status     : true, // Check the login status upon init.
+          cookie     : true, // Set session cookies to allow your server to access the session.
+          xfbml      : true  // Parse XFBML tags on this page.
+        });
+        FB.getLoginStatus(function(response) {
+          if (response.status === 'connected') {
+            $('#alert').html('Logged in, registered.');
+          } else if (response.status === 'not_authorized') {
+            $('#alert').html('Logged in, not registered.');
+            $('#register').show();
+          } else {
+            $('#alert').html('Not logged in.');
+            $('#login').show();
+          }
+        });
         // The auth.login event fires when the user logs in using the Login button.
         FB.Event.subscribe('auth.login', function(response) {
-          // We want to reload the page now so the server-side script 
-          // can read the cookie set by the Facebook Javascript. 
-          // But we don't want to use
-          // window.location.reload() because if this is in a canvas there was a
-          // post made to this page and a reload will trigger a message to the
-          // user asking if they want to send data again.
-//          window.location = window.location;
-alert('user logged in');
+        // We want to reload the page now so the server-side script 
+        // can read the cookie set by the Facebook Javascript. 
+        // But we don't want to use
+        // window.location.reload() because if this is in a canvas there was a
+        // post made to this page and a reload will trigger a message to the
+        // user asking if they want to send data again.
+        //          window.location = window.location;
         });
-        
-        //FB.Canvas.setAutoGrow();
-	
-	  };
-	
-	  // Load the SDK's source Asynchronously.
-	  // Note that the debug version is being actively developed and might 
-	  // contain some type checks that are overly strict. 
-	  // Please report such bugs using the bugs tool.
-	  (function(d, debug){
-		 var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
-		 if (d.getElementById(id)) {return;}
-		 js = d.createElement('script'); js.id = id; js.async = true;
-		 js.src = "//connect.facebook.net/en_US/all" + (debug ? "/debug" : "") + ".js";
-		 ref.parentNode.insertBefore(js, ref);
-	   }(document, false));
-	</script>
+      //FB.Canvas.setAutoGrow();
+      };
+    
+      // Load the SDK's source Asynchronously.
+      // Note that the debug version is being actively developed and might 
+      // contain some type checks that are overly strict. 
+      // Please report such bugs using the bugs tool.
+      (function(d, debug){
+         var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
+         if (d.getElementById(id)) {return;}
+         js = d.createElement('script'); js.id = id; js.async = true;
+         js.src = "//connect.facebook.net/en_US/all" + (debug ? "/debug" : "") + ".js";
+         ref.parentNode.insertBefore(js, ref);
+       }(document, false));
+    </script>
 
 <!--
-	<script src="js/jquery-1.8.3.min.js"></script>
-	<script src="js/localStorage.js"></script>
-	<script type="text/javascript">
-		$(function() {
-			appState = localStorage.getItem('appState') || { text: 'not set' };
-//			localStorage.setItem('appState', appState);
-		});
-	</script>
+    <script src="js/localStorage.js"></script>
+    <script type="text/javascript">
+        $(function() {
+            appState = localStorage.getItem('appState') || { text: 'not set' };
+//          localStorage.setItem('appState', appState);
+        });
+    </script>
 -->
 
     </body>
