@@ -1,11 +1,12 @@
 {
     "name": "app594",
     "version": "0.0.1",
-    "description": "App illustrating MongoLab, Nodejs, Heroku, Facebook integration",
+    "description": "App illustrating integration of MongoDB, Nodejs, Heroku, and Facebook",
     "dependencies": {
         "express": "3.0.4",
-        "faceplate": "0.4.0",
-        "ejs": "0.8.3"
+        "ejs": "0.8.3",
+        "restler": "2.0.1",
+        "mongodb": "1.2.5"
     },
     "engines": {
         "node": "0.8.14",

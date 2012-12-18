@@ -1,102 +1,201 @@
 # Setup of the app594 project
 
-This document is a record of how I set up the app594 project; students (developers) do not need to do this.  This is done by one person (the build manager or release engineer).
 
-Here is a list of useful docs.
+## Overview
 
-- [Managing Multiple Environments for an App](https://devcenter.heroku.com/articles/multiple-environments)
-- [Creating Apps from the CLI](https://devcenter.heroku.com/articles/creating-apps)
-- [foreman](http://blog.daviddollar.org/2011/05/06/introducing-foreman.html)
-- [Heroku Facebook template](https://github.com/heroku/facebook-template-nodejs)
-- [Getting started with Facebook login](https://developers.facebook.com/docs/howtos/login/getting-started/)
+This document is a record of how I set up the app594 project.  These are the steps a release manager would follow to setup a project; other project developers do not do this.
+
 
 ## Create a git repository for the project
 
 Create a repository at Github; select to include a README file, which will contain links to readings and instructions on how to set up a local development environment.
 
-Clone the repo with the following.
+Clone the repository with the following.
 
     git clone https://github.com/csusbdt/app594.git
 
+At this point, there is 1 remote repository location called `origin`.  To see this, run the following.
+
+    git remote
+
+To see the location of this remote repository, run the following.
+
+    git remote -v
+
 ## Create Heroku apps for staging and production
 
-I ran the following commands in my local repository for app594.
-
-Create a Heroku app to serve as the production environment.
-
-    heroku apps:create app594 --remote production
-
-As a result, the production url is the following.
-
-    http://app594.heroku.com
-
-This also creates a remote branch called `production` with the following location.
-
-    git@heroku.com:app594.git
-
-Create another Heroku app to serve as the staging environment.
+Inside the app594 folder, run the following 2 commands to create remote Heroku apps for staging and release deployments of the project.
 
     heroku apps:create app594s --remote staging
+    heroku apps:create app594 --remote production
 
-As a result, the staging url is the following.
+As a result, the staging and production urls are the following.
 
     http://app594s.heroku.com
+    http://app594.heroku.com
 
-This also creates a remote branch called `staging` with the following location.
-
-    git@heroku.com:app594s.git
-
-There are now three remote locations, origin, production and staging; to see them, run the following.
-
-    git branch
-
-To see all your Heroku apps, run the following.
+To see these Heroku apps, run the following.
 
     heroku apps
 
-## Create first app
+Also, the _heroku apps:create_ command given above configures the local repository with 2 additional remote locations named _staging_ and _production_.  To see these, along with _origin_, run the following.
 
-I ran the following to determine the version of node that I have installed.
+    git remote -v
+
+Note that when other project developers clone the repository from Github, their repositories will only contain a reference to the remote at Github called _origin_.
+
+## Create Facebook apps for development, staging and production
+
+### development
+
+Go to https://developers.facebook.com/apps and create a new app named app594d with the following settings.
+
+- For the app display name, use "App 594d". 
+- For the app namespace, use `appfnfd`. 
+- For the app domain, use `localhost`.
+- Enable sandbox mode so that only developers will be able to use the app.
+- Under the integration options, select _Website with Facebook Login_ and for the site url use `http://localhost:5000/`.
+
+To deploy a local development instance, the system needs access to the app's Facebook id and secret.  We pass this to the server as the following 2 environmental variables.
+
+    FACEBOOK_APP_ID = <development app id>
+    FACEBOOK_APP_SECRET = <development app secret>
+
+Place the above 2 lines in a file named `.env`.  This file will be read by the foreman program that we will use to launch the app llocally.
+
+Other developers will set different values for their development deployment, so omit `.env` from repository by adding it to `.gitignore`.
+
+
+### staging
+
+Create another app named app594s with the following settings.
+
+- For the app display name, use "App 594s".
+- For the app namespace, use `appfnfs`. 
+- For the app domain, use `app594s.herokuapp.com`.
+- Enable sandbox mode so that only developers will be able to use the app.
+- Under the integration options, select _Website with Facebook Login_ and for the site url use `http://app594s.herokuapp.com/`.
+
+Use the `heroku config:add` command to write the app id and secret into the Heroku's execution environment for the staging app.
+
+    heroku config:add --app app594s FACEBOOK_APP_ID=<staging id>
+    heroku config:add --app app594s FACEBOOK_APP_SECRET=<staging secret>
+
+You can check these settings by using the following command.
+
+    heroku config --app app594s
+
+
+### production
+
+Create another app named app594 with the following settings.
+
+- For the app display name, use "App 594".
+- For the app namespace, use `appfnf`. 
+- For the app domain, use `app594.herokuapp.com`.
+- Leave sandbox mode disabled.
+- Under the integration options, select _Website with Facebook Login_ and for the site url use `http://app594.herokuapp.com/`.
+
+Use the `heroku config:add` command to write the app id and secret into the Heroku's execution environment for the production app.
+
+    heroku config:add --app app594 FACEBOOK_APP_ID=<production id>
+    heroku config:add --app app594 FACEBOOK_APP_SECRET=<production secret>
+
+You can check these settings by using the following command.
+
+    heroku config --app app594
+
+## Create Mongo databases
+
+Install Mongo locally for testing in the development deployment.  Use the binary distribution provided through the MongoDB website (referred to as the 10gen builds).  Note that there are easier approaches to installing mongo, but this approach will work on all possible development platforms that your developrs might use: Windows, OS X and Linux.
+
+The following runs Mongo locally.
+
+    mongod
+
+Create 2 Mongo databases through the MongoLab website, a database for staging named _app594s_ and another for production named _app594_. Make a database user for each database.  Make a note of the driver-based connection strings for these 2 databases provided through the MongoLab Web site.
+
+Use the `heroku config:add` command to write the driver-based connection strings into the staging and production Heroku execution environments.
+
+    heroku config:add --app app594s MONGOLAB_URI=<staging string>
+    heroku config:add --app app594  MONGOLAB_URI=<production string>
+
+You can check the settings by using the following command.
+
+    heroku config --app app594s
+    heroku config --app app594
+
+## Configure dependencies
+
+Determine the versions of node and npm installed.  (Make sure they are current.)
 
     node --version
-
-The following gave me the version of npm installed.
-
     npm --version
 
-I ran the following to determine the version of the most recent version of express, which I will specify as a dependency.
+Determine the most recent version of express, ejs, mongodb, everyauth.
 
     npm view express version
+    npm view ejs version
+    npm view mongodb version
+    npm view everyauth version
 
-I read [Heroku Node.js Support](https://devcenter.heroku.com/articles/nodejs-support) to understand how to do the following.
-
-Create file `package.json` with the following contents.
+Create a file named `package.json` with the following contents.  (Make sure the version numbers match with what you have installed.)
 
 ````
 {
-	"name": "app594",
-	"version": "0.0.1",
-	"dependencies": {
-		"express": "3.0.4"
-	},
-	"engines": {
-		"node": "0.8.14",
-		"npm": "1.1.65"
-	}
+    "name": "app594",
+    "version": "0.0.1",
+    "description": "App illustrating integration of MongoDB, Nodejs, Heroku, and Facebook",
+    "dependencies": {
+        "express": "3.0.4",
+        "ejs": "0.8.3",
+        "everyauth": "0.3.1",
+        "mongodb": "1.2.5"
+    },
+    "engines": {
+        "node": "0.8.14",
+        "npm": "1.1.65"
+    }
 }
 ````
 
-Install dependencies in local environment.  The npm command knows what to install by reading `package.json`
+Install dependencies in local environment.  The npm command knows what to install by reading `package.json`.
 
     npm install
-
-The above command creates folder `node_modules` for the installed dependencies.  This folder does not need to be in the repository because it can be generated with the npm command by developers and the Heroku environment runs `npm intall --production` on deployment.  So, create file `.gitignore` with th following contents.
-
-    node_modules
 
 Run the following to see the installed modules.
 
     npm ls
+
+The above command creates folder `node_modules` for the installed dependencies.  This folder should not be in the repository.  Each developer who clones the repository needs to run `npm install` to install the dependent modules.  Also, when the project is deployed for staging or production, the Heroku environment runs `npm intall --production` automatically. So, create file `.gitignore` with the following contents.
+
+    node_modules
+
+
+---
+
+#CONTINUE FROM HERE
+
+---
+
+
+## Tests
+
+The following tests verify conceptual understanding and correctness of the configuration.
+
+### test-server-init
+
+When the server starts, it uses its facebook app id and secret to retrieve a secret app token, which it will use to make calls into the graph API.
+
+Isolate retrieval of the app token in a module named `fb-app-token`.  The test is contained in `test-fb-app-token`.
+
+````
+require('./fb-app-token');
+
+````
+
+
+## Test the development deployment
 
 Create file `web.js` with the following contents.
 
@@ -126,6 +225,13 @@ The Procfile specifies the processes to start up on deployment (or re-deployment
 Go to the following URL in a browser to test the app.
 
     http://localhost:5000/
+
+
+
+
+## Create first app
+
+
 
 Commit to the master branch, push to github.
 
@@ -168,27 +274,6 @@ Test the staged app by going to the following url in a browser.
 
 ## Create a Facebook app for development
 
-Go to https://developers.facebook.com/apps and create a new app named app594d. 
-
-For the app display name, use "App 594d." 
-
-For the app namespace, use `app-five-ninety-four-d`. 
-
-For the app domain, use `localhost`.
-
-Enable sandbox mode so that only developers will be able to use the app.
-
-Under the integration options, select _Website with Facebook Login_ and use the following for the site url.
-
-    http://localhost:5000/
-
-Determine the latest version number for ejs.
-
-    npm info ejs version
-
-Edit `package.json` to include ejs.  Install ejs locally.
-
-    npm install
 
 Change the contents of `web.js` to the following. 
 
@@ -314,6 +399,7 @@ Create a file named `index.ejs` with the following contents.
   </body>
 </html>
 ````
+
 Run server and test with a browser.
 
     foreman start
@@ -321,106 +407,6 @@ Run server and test with a browser.
 Go to http://localhost:5000/ in a browser.
 
 
-## Create a Facebook app for staging
-
-Go to https://developers.facebook.com/apps and create a new app named app594s. 
-
-For the app display name, use "App 594s." 
-
-For the app namespace, use `app-five-ninety-four-s`. 
-
-For the app domain, use `app594s.herokuapp.com`.
-
-Enable sandbox mode so that only developers will be able to use the app.
-
-Under the integration options, select _Website with Facebook Login_ and use the following for the site url.
-
-    http://app594s.herokuapp.com/
-
-TO BE CONTINUED
-
-heroku config:add FACEBOOK_APP_ID=12345
-
-
-
-## Create 3 Facebook apps
-
-Create app594 for production, app594s for staging, and app594d for development.
-
-Go to https://developers.facebook.com/apps and create 3 new apps named app594d, app594s, app594.  I  only entered the app name in each case; I did not enter an optional namespace nor did I check the web hosting box.  I made a note of the app id and app secret for each of the 3 apps.
-
-
-
-
-
-
-I first tried to get the development app to work.
-
-I referred to the following github project as a reference to contruct this app.
-
-    https://github.com/heroku/facebook-template-nodejs
-
-Determine the version number of the most recent release of the faceplate module.
-
-    npm view faceplate version
-
-Add the following line to the dependencies array in `package.json`.
-
-    'faceplate': '0.4.0'
-
-Install faceplate and dependencies.
-
-    npm install
-
-Change the contents of `web.js` to the following. 
-
-````
-
-````
-
-
-I recorded the app id and secret.
-
-app594:
-
-App ID:	387071441377951
-App Secret:	ee21f3627ae36e773d6f85758fda30c8
-
-app594s:
-App ID:	141880709295917
-App Secret:	da1e548a335405262a93e72cdc8c28e3
-
-app594d:
-App ID:	433935356668511
-App Secret:	f84820a6e277584e519f560430349fd4
-
-
-
 
 look at http://ckrack.github.com/fbootstrapp/
 
-
-
-## Add MongoDB support
-
-
-
-
-
----
-
-
-
-[This gist](https://gist.github.com/1709617) shows how to create a simple static website with Nodejs.
-
-````
-var express = require('express');
-var port = process.env.PORT || 3000;
-var app = express.createServer();
- 
-app.get('/', function(request, response) {
-    response.sendfile(__dirname + '/index.html');
-}).configure(function() {
-    app.use('/images', express.static(__dirname + '/images'));
-}).listen(port);
-````
