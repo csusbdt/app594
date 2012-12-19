@@ -12,6 +12,7 @@ app.configure(function(){
     res.send(500, err.stack);
   });
   app.get('/', fb.html);
+  app.get('/index.html', function(req, res) { res.redirect('/'); } );
 });
 
 fb.config({

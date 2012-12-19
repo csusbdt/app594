@@ -22,7 +22,7 @@ exports.config = function(config, cb) {
       cb();
     }
   });
-  require('fs').readFile('html.ejs', 'utf8', function(err, file) {
+  require('fs').readFile('public/index.html', 'utf8', function(err, file) {
     if (err) {
       console.log(err);
       html = err;
