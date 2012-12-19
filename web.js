@@ -15,7 +15,7 @@ app.configure(function(){
   app.get('/index.html', function(req, res) { res.redirect('/'); } );
 });
 
-fb.config({
+fb.init({
     appId: process.env.FACEBOOK_APP_ID,
     appSecret: process.env.FACEBOOK_APP_SECRET
   },

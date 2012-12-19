@@ -6,7 +6,8 @@
         "express": "3.0.4",
         "ejs": "0.8.3",
         "restler": "2.0.1",
-        "mongodb": "1.2.5"
+        "mongodb": "1.2.5",
+        "async": "0.1.22"
     },
     "engines": {
         "node": "0.8.14",
