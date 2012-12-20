@@ -1,13 +1,57 @@
+// TODO validate user in exchangeAccessToken
+// see http://stackoverflow.com/questions/5406859/facebook-access-token-server-side-validation-for-iphone-app
+
 var querystring = require('querystring');
 var async = require('async');
 var rest = require('restler');
 var html = 'Not ready. Please try again.';
-var appId;
-var appSecret;
 var appToken;
 var channelDoc = '<script src="//connect.facebook.net/en_US/all.js"></script>';
 
-exports.channel = function (req, res) {
+// Internal
+// cb = function(err)
+function parseHtmlFile(cb) {
+  function readFileCallback(err, file) {
+    if (err) {
+      html = err;
+      cb(err);
+    } else {
+      html = require('ejs').render(file, { locals: { appId: process.env.FACEBOOK_APP_ID } });
+      cb();
+    }
+  }    
+  require('fs').readFile('public/index.html', 'utf8', readFileCallback); 
+}
+
+// Internal
+// cb = function(err)
+function getAppToken(cb) {
+  var url = 
+       'https://graph.facebook.com/oauth/access_token?' + 
+       'client_id=' + process.env.FACEBOOK_APP_ID +
+       '&client_secret=' + process.env.FACEBOOK_SECRET +
+       '&grant_type=client_credentials';
+  rest.get(url).on('complete', function(result) {
+    if (result instanceof Error) {
+      cb(result.message);
+    } else {
+      appToken = querystring.parse(result)['access_token'];
+      console.log('appToken acquired');
+      cb();
+    }
+  });  
+}
+
+// External
+// cb = function(err)
+function init(cb) {
+  async.parallel([parseHtmlFile, getAppToken], function(err, result) {
+    if (err) cb(err); else cb();
+  });
+}
+
+// External
+function handleChannelRequest(req, res) {
   res.set({
     'Content-Type': 'text/html',
     'Content-Length': channelDoc.length,
@@ -16,63 +60,33 @@ exports.channel = function (req, res) {
     'Expires': new Date(Date.now() + 31536000).toUTCString()
   });
   res.end(channelDoc);
-};
+}
+
+// External
+function handleHtmlRequest(req, res) {
+  res.send(html);
+}
 
 // see http://stackoverflow.com/questions/5406859/facebook-access-token-server-side-validation-for-iphone-app
-function validateUser(uid, accessToken, cb) {
-  cb();
-}
-
-function parseHtmlFile(cb) {
-  function readFileCallback(err, file) {
-    if (err) {
-      html = err;
-      cb(err);
-    } else {
-      html = require('ejs').render(file, { locals: { appId: appId } });
-      cb();
-    }
-  }    
-  require('fs').readFile('public/index.html', 'utf8', readFileCallback); 
-}
-
-function getAppToken(cb) {
+//
+// External; cb = function(err, newAccessToken)
+function exchangeAccessToken(accessToken, cb) {
   var url = 
-    'https://graph.facebook.com/oauth/access_token?' + 
-    'client_id=' + appId +
-    '&client_secret=' + appSecret +
-    '&grant_type=client_credentials';
+       'https://graph.facebook.com/oauth/access_token' + 
+       '?client_id=' + process.env.FACEBOOK_APP_ID +
+       '&client_secret=' + process.env.FACEBOOK_SECRET +
+       '&grant_type=fb_exchange_token' +
+       '&fb_exchange_token=' + accessToken;
   rest.get(url).on('complete', function(result) {
     if (result instanceof Error) {
-      console.log('Error: ' + result.message + '\nRetrying in 5 seconds...');
-      this.retry(5000);
+      cb(result.message);
     } else {
-      appToken = querystring.parse(result)['access_token'];
-      cb();
+      cb(null, querystring.parse(result)['access_token']);
     }
   });  
 }
 
-exports.init = function(config, cb) {
-  appId = config.appId;
-  appSecret = config.appSecret;   
-  async.parallel([
-      parseHtmlFile,
-      getAppToken
-    ], 
-    function(err, result) {
-      if (err) {
-        cb(err);
-      } else {
-        cb();
-      }
-    }
-  );
-};
-
-exports.html = function(req, res) {
-  res.send(html);
-};
-
-exports.start = function(req, res) {
-};
+exports.init = init;
+exports.html = handleHtmlRequest;
+exports.channel = handleChannelRequest;
+exports.exchangeAccessToken = exchangeAccessToken;

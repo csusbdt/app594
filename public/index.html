@@ -25,20 +25,26 @@
     
     <script src="js/jquery-1.8.3.min.js"></script>
     <script>
+			var app = {};
+			// cb = function(err)
+			app.login = function(uid, accessToken, cb) {
+				alert('establish session with server');
+				cb();
+			};
+			// cb = function(err)
+			app.getNumber = function(cb) {
+				alert('use ajax to get number from server');
+				app.number = 13;
+				cb();
+			};      
+			app.saveNumber = function(number, cb) {
+				alert('use ajax to save number through server');
+				cb();
+			};
+      
       $(function() {
-      
-        var app = {};
-        app.start = function(options, cb) {
-          alert('establish session with server');
-          cb();
-        };      
-        app.getNumber = function(cb) {
-          alert('use ajax to get number from server');
-          app.number = 13;
-          cb();
-        };
-      
         function login() {
+          // TODO: send accessToken to login; get success reply.
           FB.login(function(response) {
             if (response.authResponse) {
               FB.api('/me', function(response) {
@@ -55,24 +61,25 @@
           FB.init({
             appId      : '<%= appId %>',
             channelUrl : '://' + window.location.host + '/channel.html',
-            status     : true,  // Check the login status upon init.
-            cookie     : true,  // Set session cookies to allow your server to access the session.
-            xfbml      : false  // Parse XFBML tags on this page.
+            status     : true,   // Check the login status upon init?
+            cookie     : false,  // Set session cookies?
+            xfbml      : false   // Parse XFBML tags?
           });
           FB.getLoginStatus(function(response) {
             if (response.status === 'connected') {
-              var options = {
-                uid: response.authResponse.userID,
-                accessToken: response.authResponse.accessToken
-              };
-              app.start(options, function(err) {
+              app.login(response.authResponse.userID, response.authResponse.accessToken, function(err) {
                 if (err) {
                   $('#error').html(err);
                   $('#error-view').show();
                 } else {
-                  app.getNumber(function() {
-                    $('.view').hide();
-                    $('#game-view').show();
+                  app.getNumber(function(err) {
+                    if (err) {
+                      $('#error').html(err);
+                      $('#error-view').show();
+                    } else {
+                      $('.view').hide();
+                      $('#game-view').show();
+                    }
                   });
                 }
               });
