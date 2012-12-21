@@ -1,5 +1,5 @@
 // TODO:
-//   - Add session storage; see https://github.com/kcbanner/connect-mongo
+//   - This app uses the facebook accessToken as a shared secret.
 //
 
 var async = require('async');
@@ -17,17 +17,54 @@ function error(err, req, res, next) {
 
 function configureExpress() {
   app.set('port', process.env.PORT);
-  app.get('/', fb.html);
-  app.get('/channel.html', fb.channel);
-  app.get('/index.html', function(req, res) { res.redirect('/'); } );
-  app.use('/op/', express.bodyParser());
-  app.use('/op/', express.cookieParser());
-  app.use('/op/', express.session({ secret: process.env.SESSION_SECRET || 'change-me-soon' }));
-  app.get('/op/get-number', game.getNumber);
-  app.get('/op/save-number', game.saveNumber);
+  app.use(express.cookieParser());
+  app.use(express.methodOverride());  // maybe take this out
+  app.use(express.bodyParser());
+  //app.use('/op/', express.csrf());  // definitely add this later
   app.use(staticHandler);
   app.use(error);
 }
+
+app.get('/', fb.html);
+app.get('/channel.html', fb.channel);
+app.get('/index.html', function(req, res) { res.redirect('/'); } );
+
+app.post('/op/login', function(req, res) {
+  var args = {
+    uid: req.params.uid,
+    accessToken: req.params.accessToken
+  };
+  game.login(args, function(err, newToken) {
+    if (err) {
+      res.json({ err: err });
+    } else {
+      res.json({ accessToken: newToken });
+    }
+  });
+});
+
+app.post('/op/logout', function(req, res) {
+  req.session = null;
+  res.end();
+});
+
+app.post('/op/get-number', function(req, res) {
+  game.getNumber(req.params.accessToken, function(err, number) {
+    if (err) res.json({err: err});
+    else res.json({ number: number });
+  });
+});
+
+app.post('/op/save-number', function(req, res) {
+  var args = {
+    accessToken: req.params.accessToken,
+    number: req.params.number
+  };
+  game.saveNumber(args, function(err, number) {
+    if (err) res.json({err: err});
+    else res.json({});
+  });
+});
 
 // cb = function(err)
 function init(cb) {

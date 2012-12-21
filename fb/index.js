@@ -67,9 +67,7 @@ function handleHtmlRequest(req, res) {
   res.send(html);
 }
 
-// see http://stackoverflow.com/questions/5406859/facebook-access-token-server-side-validation-for-iphone-app
-//
-// External; cb = function(err, newAccessToken)
+// External; cb = function(err, newAccessToken, expires)
 function exchangeAccessToken(accessToken, cb) {
   var url = 
        'https://graph.facebook.com/oauth/access_token' + 
@@ -81,7 +79,10 @@ function exchangeAccessToken(accessToken, cb) {
     if (result instanceof Error) {
       cb(result.message);
     } else {
-      cb(null, querystring.parse(result)['access_token']);
+      cb(null, 
+        querystring.parse(result)['access_token'], 
+        querystring.parse(result)['expires']
+      );
     }
   });  
 }
