@@ -6,12 +6,11 @@
         "express": "3.0.4",
         "ejs": "0.8.3",
         "restler": "2.0.1",
-        "mongodb": "1.2.5",
-        "faceplate": "0.4.0",
+        "mongodb": "1.2.6",
         "async": "0.1.22"
     },
     "engines": {
-        "node": "0.8.14",
-        "npm": "1.1.65"
+        "node": "0.8.16",
+        "npm": "1.1.69"
     }
 }

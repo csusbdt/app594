@@ -18,7 +18,7 @@ function error(err, req, res, next) {
 function configureExpress() {
   app.set('port', process.env.PORT);
   app.use(express.cookieParser());
-  app.use(express.methodOverride());  // maybe take this out
+//  app.use(express.methodOverride());  // maybe take this out
   app.use(express.bodyParser());
   //app.use('/op/', express.csrf());  // definitely add this later
   app.use(staticHandler);
