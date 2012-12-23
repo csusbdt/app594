@@ -1,30 +1,36 @@
 // TODO validate user in exchangeAccessToken
 // see http://stackoverflow.com/questions/5406859/facebook-access-token-server-side-validation-for-iphone-app
 
+// Unless otherwise stated, callbacks have the form function(err).
+
 var querystring = require('querystring');
 var async = require('async');
 var rest = require('restler');
-var html = 'Not ready. Please try again.';
+var fs = require('fs');
+var ejs = require('ejs');
+var loginHtmlString;
 var appToken;
 var channelDoc = '<script src="//connect.facebook.net/en_US/all.js"></script>';
 
-// Internal
-// cb = function(err)
-function parseHtmlFile(cb) {
-  function readFileCallback(err, file) {
-    if (err) {
-      html = err;
+////////////////////////////////////////////////////////////////////////
+// Internal functions
+////////////////////////////////////////////////////////////////////////
+
+function createViews(cb) {    
+  fs.readFile('views/login.ejs', 'utf8', function(err, file) {
+    if (err) { 
+      loginHtmlString = err; 
       cb(err);
     } else {
-      html = require('ejs').render(file, { locals: { appId: process.env.FACEBOOK_APP_ID } });
+      var ejsArgs = { 
+        locals: { appId: process.env.FACEBOOK_APP_ID } 
+      };
+      loginHtmlString = ejs.render(file, ejsArgs);
       cb();
     }
-  }    
-  require('fs').readFile('public/index.html', 'utf8', readFileCallback); 
+  });
 }
 
-// Internal
-// cb = function(err)
 function getAppToken(cb) {
   var url = 
        'https://graph.facebook.com/oauth/access_token?' + 
@@ -42,15 +48,16 @@ function getAppToken(cb) {
   });  
 }
 
-// External
-// cb = function(err)
+////////////////////////////////////////////////////////////////////////
+// External functions
+////////////////////////////////////////////////////////////////////////
+
 function init(cb) {
-  async.parallel([parseHtmlFile, getAppToken], function(err, result) {
+  async.parallel([createViews, getAppToken], function(err) {
     if (err) cb(err); else cb();
   });
 }
 
-// External
 function handleChannelRequest(req, res) {
   res.set({
     'Content-Type': 'text/html',
@@ -63,8 +70,8 @@ function handleChannelRequest(req, res) {
 }
 
 // External
-function handleHtmlRequest(req, res) {
-  res.send(html);
+function handleLoginPageRequest(req, res) {
+  res.send(loginHtmlString);
 }
 
 // External; cb = function(err, newAccessToken, expires)
@@ -88,6 +95,6 @@ function exchangeAccessToken(accessToken, cb) {
 }
 
 exports.init = init;
-exports.html = handleHtmlRequest;
+exports.loginHtml = handleLoginPageRequest;
 exports.channel = handleChannelRequest;
 exports.exchangeAccessToken = exchangeAccessToken;

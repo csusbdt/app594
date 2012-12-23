@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>App 594</title>
+  </head>
+  <body>
+    <div id="fb-root"></div>
+    
+    <button id="login-btn" onclick="loginFacebook()">Login</button>
+        
+    <script>
+      function loginFacebook() {
+        console.log("loginFacebook called");
+        FB.getLoginStatus(function(response) {
+          console.log("getLoginStatus callback called");
+          if (response.status === 'connected') {
+            console.log("connected to facebook");
+            app.login({ uid: response.authResponse.userID, accessToken: response.authResponse.accessToken });
+          } else {
+            console.log("user did not login or did not authorize app");
+            app.facebookLogin();
+          }
+        });
+      }
+      
+      window.fbAsyncInit = function() {
+        FB.init({
+          appId      : '<%= appId %>',
+          channelUrl : '://' + window.location.host + '/channel.html',
+          status     : true, // check the login status upon init?
+          cookie     : false, // set sessions cookies?
+          xfbml      : false  
+        });
+        
+        window.loginTimeout = setTimeout(loginFacebook, 1000);
+      
+        FB.Event.subscribe('auth.login', function(response) {
+          console.log('auth.login fired');
+          if (response.status === 'connected') {
+            clearTimeout(loginTimeout);
+            console.log("connected to facebook");
+            window.location = window.location + 
+              '?uid=' + response.authResponse.userID + 
+              '&token=' + response.authResponse.accessToken;
+          } else {
+            console.log("user did not login or did not authorize app");            
+          }
+        });
+      
+        FB.Canvas.setAutoGrow();
+      };
+      // Load the SDK's source Asynchronously
+      (function(d, debug){
+         var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
+         if (d.getElementById(id)) {return;}
+         js = d.createElement('script'); js.id = id; js.async = true;
+         js.src = "//connect.facebook.net/en_US/all" + (debug ? "/debug" : "") + ".js";
+         ref.parentNode.insertBefore(js, ref);
+       }(document, /*debug*/ false));
+    </script>
+
+  </body>
+</html>
