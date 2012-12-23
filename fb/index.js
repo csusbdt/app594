@@ -16,7 +16,7 @@ var channelDoc = '<script src="//connect.facebook.net/en_US/all.js"></script>';
 // Internal functions
 ////////////////////////////////////////////////////////////////////////
 
-function createViews(cb) {    
+function createLoginHtmlString(cb) {    
   fs.readFile('views/login.ejs', 'utf8', function(err, file) {
     if (err) { 
       loginHtmlString = err; 
@@ -53,7 +53,7 @@ function getAppToken(cb) {
 ////////////////////////////////////////////////////////////////////////
 
 function init(cb) {
-  async.parallel([createViews, getAppToken], function(err) {
+  async.parallel([createLoginHtmlString, getAppToken], function(err) {
     if (err) cb(err); else cb();
   });
 }
@@ -69,12 +69,11 @@ function handleChannelRequest(req, res) {
   res.end(channelDoc);
 }
 
-// External
 function handleLoginPageRequest(req, res) {
   res.send(loginHtmlString);
 }
 
-// External; cb = function(err, newAccessToken, expires)
+// cb = function(err, newAccessToken, expires)
 function exchangeAccessToken(accessToken, cb) {
   var url = 
        'https://graph.facebook.com/oauth/access_token' + 

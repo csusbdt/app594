@@ -7,9 +7,15 @@ var mongoUri =
 	process.env.MONGOLAB_URI || 
 	'mongodb://localhost:27017/app594d';
 
+var gameHtmlString = 'to be continued ...';
+
 var tokens = {};
 var users = {};
 
+////////////////////////////////////////////////////////////////////////
+// Internal functions
+////////////////////////////////////////////////////////////////////////
+/*
 mongo.Db.connect(mongoUri, function (err, db) {
 	if (err) {
 		console.log("Connect err: " + err);
@@ -24,9 +30,34 @@ mongo.Db.connect(mongoUri, function (err, db) {
 		});
 	}
 });
+*/
 
-// cb = function(err, newToken)
-function login(args, cb) {
+// cb = function(err, html)
+function createGameHtmlString(cb) {
+  fs.readFile('views/game.ejs', 'utf8', function(err, file) {
+    if (err) { 
+      gameHtmlString = err; 
+      cb(err);
+    } else {
+      var ejsArgs = { 
+        locals: { appId: process.env.FACEBOOK_APP_ID } 
+      };
+      gameHtmlString = ejs.render(file, ejsArgs);
+      cb();
+    }
+  });
+}
+
+////////////////////////////////////////////////////////////////////////
+// External functions
+////////////////////////////////////////////////////////////////////////
+
+// cb = function(err)
+function handleGamePageRequest(req, res) {
+  res.send(gameHtmlString);
+}
+
+function login(err, newToken) {
   fb.exchangeAccessToken(args.accessToken, function(err, newToken, expires) {
     var user;
     if (err) {
@@ -66,6 +97,7 @@ function saveNumber(args, cb) {
   }
 }
 
-exports.login = login;
-exports.getNumber = getNumber;
-exports.saveNumber = saveNumber;
+//exports.login = login;
+//exports.getNumber = getNumber;
+//exports.saveNumber = saveNumber;
+exports.html = handleGamePageRequest;

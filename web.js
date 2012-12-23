@@ -2,6 +2,7 @@ var async = require('async');
 var http = require('http');
 var express = require('express');
 var fb = require('./fb');
+var game = require('./game');
 
 var app = express();
 
@@ -22,8 +23,8 @@ app.get('/', function(req, res) {
 
   if (typeof uid === 'undefined' || typeof accessToken === 'undefined') {
     fb.loginHtml(req, res);
-  } else { 
-    res.send('you are logged in.');
+  } else {
+    game.html(req, res);
   }
 });
 
