@@ -1,7 +1,6 @@
 var async = require('async');
 var http = require('http');
 var connect = require('connect');
-//var cookie = require('cookie');
 var fs = require('fs');
 var ejs = require('ejs');
 var assert = require('assert');
@@ -49,7 +48,9 @@ var cookieParser = connect.cookieParser();
 //    res.send(500, err.stack);
 //  });
 
-function returnGamePageFromCookie(cookie, res) {
+function returnGamePageFromCookie(cookieString, res) {
+console.log('cookie string = ' + cookieString);
+  var cookie = JSON.parse(cookieString);
   var getArgs = {
     uid: cookie.uid,
     secret: cookie.secret
@@ -64,8 +65,8 @@ function returnGamePageFromCookie(cookie, res) {
       return;
     }
     if (user === null) {
-      res.clearCookie('app594');
-      res.send(loginPage);
+      res.setHeader('Set-Cookie', 'app594=deleted; Expires=Thu, 01-Jan-1970 00:00:01 GMT');
+      res.end(loginPage);
       return;
     }
     var ejsArgs = { 
@@ -110,30 +111,45 @@ function returnGamePageFromQuery(req, res) {
           }
         };
         var cookie = { uid: req.query.uid, secret: result.secret };
-        res.setHeader('Set-Cookie', 'app594=' + JSON.stringify(cookie));
-//        var hdr = cookie.serialize(
-  //        'app594', 
-    //      { uid: req.query.uid, token: result.secret }, 
-      //    { expires: result.expires }
-        //);
-        
+        res.setHeader('Set-Cookie', 
+          'app594=' + JSON.stringify(cookie) + 
+          '; Expires=' + new Date(result.expires).toUTCString() +
+          '; Path=/; HttpOnly');
         res.end(ejs.render(gamePage, ejsArgs));      
       });
     });
 }
 
 app.use('/', function(req, res, next) {
-  cookieParser(req, res, function() {
-    var cookie = req.cookies['app594'];
-console.log(cookie);
+
+  console.log('req.headers = ' + req.headers);
+  
+  var cookie = req.headers.cookie; 
+  
+    
     if (typeof cookie !== 'undefined') {
-      returnGamePageFromCookie(cookie, res);  
+      var cookieValue = cookie.substr(cookie.indexOf('=') + 1);  
+      console.log('cookieValue = ' + cookieValue);
+      returnGamePageFromCookie(cookieValue, res);  
+    } else if(typeof req.query.token === 'undefined') {
+        res.end(loginPage);
+    } else {
+      returnGamePageFromQuery(req, res);
+    }    
+
+/*
+  cookieParser(req, res, function() {
+    var cookies = req.cookies['app594'];
+console.log(cookies);
+    if (typeof cookies !== 'undefined') {
+      returnGamePageFromCookie(cookies[0], res);  
     } else if(typeof req.query.token === 'undefined') {
         res.end(loginPage);
     } else {
       returnGamePageFromQuery(req, res);
     }    
   });
+  */
 });
 
 app.use('/channel.html', fb.channel);

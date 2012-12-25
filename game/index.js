@@ -78,6 +78,28 @@ function init(cb) {
   });
 }
 
+function getUser(args, cb) {
+  mongo.Db.connect(process.env.MONGO_URI, function (err, db) {
+    if (err) {
+      assert(err instanceof Error);
+      console.log("Connect err: " + err);
+      cb(err);
+      return;
+    }
+    var users = db.collection('users');
+    var query = { uid: args.uid };
+    users.findOne(query, function(err, user) {
+      if (err) {
+        assert(err instanceof Error);
+        console.log("findAndModify err: " + err);
+        cb(err);
+        return;
+      }
+      cb(user);
+    });
+  });
+}
+
 function updateUser(args, cb) {
   mongo.Db.connect(process.env.MONGO_URI, function (err, db) {
     if (err) {
@@ -167,5 +189,6 @@ function saveNumber(args, cb) {
 //exports.getNumber = getNumber;
 //exports.saveNumber = saveNumber;
 exports.init = init;
+exports.getUser = getUser;
 exports.updateUser = updateUser;
 
