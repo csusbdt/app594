@@ -32,7 +32,7 @@ function init(cb) {
   });  
 }
 
-function handleChannelRequest(req, res) {
+function handleChannelRequest(req, res, next) {
   res.set({
     'Content-Type': 'text/html',
     'Content-Length': channelDoc.length,
