@@ -12,8 +12,6 @@ var app = express();
 var loginPage;
 var gamePage;
 
-// Unless otherwise stated, callbacks have the form function(err).
-
 function initLoginPage(cb) {
   fs.readFile('views/login.ejs', 'utf8', function(err, file) {
     if (err) { 
@@ -46,17 +44,46 @@ app.configure(function() {
   app.use('/save', express.bodyParser());
   app.use('/', express.cookieParser());
   app.use(express.static(require('path').join(__dirname, 'public')));
-//  app.use(ourMiddleware);
+//  app.use(function(err, req, res, next) {
+//    console.error(err.stack);
+//    res.send(500, err.stack);
+//  });
 });
 
-function ourMiddleware(req, res, next, err) {
+function returnGamePageFromCookie(cookie, res) {
+  var getArgs = {
+    uid: cookie.uid,
+    secret: cookie.secret
+  };
+  game.getUser(getArgs, function(user) {
+    if (user instanceof Error) {
+      console.log(user);
+      res.clearCookie('app594');
+      res.send(user);
+      return;
+    }
+    if (user === null) {
+      res.clearCookie('app594');
+      res.send(loginPage);
+      return;
+    }
+    var ejsArgs = { 
+      locals: { 
+        appId: process.env.FACEBOOK_APP_ID,
+        uid: user.uid,
+        secret: user.secret,
+        expires: user.expires,
+        number: user.number
+      }
+    };
+    res.send(ejs.render(gamePage, ejsArgs));
+  });
 }
 
 app.get('/', function(req, res) {
-  if (typeof req.cookies['app594'] !== 'undefined') {
-  
-  // TODO: grab the cookie and use it!
-  
+  var cookie = req.cookies['app594'];
+  if (typeof cookie !== 'undefined') {
+    returnGamePageFromCookie(cookie, res);  
   } else if(typeof req.query.token === 'undefined') {
       res.send(loginPage);
   } else {
@@ -117,11 +144,11 @@ app.post('/op/save-number', function(req, res) {
 
 function checkEnv(cb) {
   if (process.env.FACEBOOK_APP_ID === undefined) {
-    cb('FACEBOOK_APP_ID not defined');
+    cb(new Error('FACEBOOK_APP_ID not defined'));
   } else if (process.env.FACEBOOK_SECRET === undefined) {
-    cb('FACEBOOK_SECRET not defined');
+    cb(new Error('FACEBOOK_SECRET not defined'));
   } else if (process.env.MONGO_URI === undefined) {
-    cb('MONGO_URI not defined');
+    cb(new Error('MONGO_URI not defined'));
   } else {
     cb();
   }

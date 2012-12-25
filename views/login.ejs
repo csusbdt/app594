@@ -7,19 +7,22 @@
   <body>
     <div id="fb-root"></div>
     
-    <button id="login-btn" onclick="loginFacebook()">Login</button>
+    <div id="status">Loading ...</div>
+    <button id="login-btn" onclick="loginFacebook()" style="display: none">Login</button>
         
     <script>
       function loginFacebook() {
         console.log("loginFacebook called");
-        FB.getLoginStatus(function(response) {
-          console.log("getLoginStatus callback called");
-          if (response.status === 'connected') {
-            console.log("connected to facebook");
-            app.login({ uid: response.authResponse.userID, accessToken: response.authResponse.accessToken });
+        FB.login(function(response) {
+          if (response.authResponse) {
+            console.log('authResponse present');
+            window.location = window.location + 
+              '?uid=' + response.authResponse.userID + 
+              '&token=' + response.authResponse.accessToken;
           } else {
-            console.log("user did not login or did not authorize app");
-            app.facebookLogin();
+            console.log('authReponse not present');
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('login-btn').style.display = 'block';
           }
         });
       }
@@ -33,21 +36,28 @@
           xfbml      : false  
         });
         
-        window.loginTimeout = setTimeout(loginFacebook, 1000);
+        window.loginTimeout = setTimeout(function() { 
+        console.log('timeout triggered');
+          document.getElementById('status').style.display = 'none';
+          document.getElementById('login-btn').style.display = 'block'; 
+        }, 1000);
       
-        FB.Event.subscribe('auth.login', function(response) {
-          console.log('auth.login fired');
+
+        FB.getLoginStatus(function(response) {
+          clearTimeout(loginTimeout);
+          console.log("getLoginStatus callback called");
           if (response.status === 'connected') {
-            clearTimeout(loginTimeout);
             console.log("connected to facebook");
             window.location = window.location + 
               '?uid=' + response.authResponse.userID + 
               '&token=' + response.authResponse.accessToken;
           } else {
-            console.log("user did not login or did not authorize app");            
+            console.log("user did not login or did not authorize app");
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('login-btn').style.display = 'block';
           }
         });
-      
+        
         FB.Canvas.setAutoGrow();
       };
       // Load the SDK's source Asynchronously
