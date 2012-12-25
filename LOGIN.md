@@ -2,6 +2,10 @@
 
 ## Overview
 
+This document describes the communication flows between the subsystems comprising this application.  The application is a trivial Facebook game.  Each player is assigned a number variable initialized to zero when they first authenticate to the system. The user can increment the number stored in the variable by clicking a button.  The user interface also displays the largest number across all players in the system.
+
+### Subsystems
+
 This description of the system includes communications between the following 4 subsystems.
 
 - __browser__ the end user browser
@@ -9,23 +13,43 @@ This description of the system includes communications between the following 4 s
 - __db__ the app database 
 - __fb__ Facebook
 
-Facebook allows an app to convert short-lived access tokens into long-lived tokens. The app uses the long-lived tokens to authenticate users; this document refers to the long-lived Facebook tokens as __secret__. The main reason for using the long-lived token for app authentication is because it minimizes the number of messages needed.
+### Authentication credentials
 
-Also, the app uses the Facebook user ID for it's user ID.  This is referred to as _uid_ in this document.
+The app uses the Facebook user ID for it's user ID.  This is referred to as _uid_ in this document.
+
+Facebook allows an app to convert short-lived access tokens into long-lived tokens. The application uses these tokens as passwords to authenticate the user.  This document refers to a user's long-lived token as the __secret__.
+
+The main reason for using the long-lived token for app authentication is because it minimizes the number of messages needed by the app.
+
+Currently, autheticaion is required to access dynamically generated content; all requests for static content are allowed without authentication.
+
+### Cookies
 
 The app makes use of long-lived cookies but does not require them.
 
 The app does not use session cookies; the browser provides the secret on an as-needed basis.
 
-Currently, all requests for static content are allowed without authentication.
+### Database
 
-Objects from the database are referred to as _documents_ because we are using a docoment-oriented database (MongoDB).
+Objects from the database are referred to as _documents_ because we are using a document-oriented database (MongoDB).
 
-The system returns 2 web pages: the login page and the game page.  The login page is the same for all users, and si it can be constructed when the server starts.  The game page on the other hand contains user-specific information and so is constructed when requested by the browser.  Both pages have the same URL, which is the root path.
+### Web Pages
+
+The system returns 2 web pages: the login page and the game page.  
+
+The login page is the same for all users, and so it can be considered static content.  However, the login page needs the Facebook application ID, which varies across deployments (development, staging, production).  For this reason, the page is constructed when the server starts.  
+
+The game page contains the Facebook application ID, uid, secret and a snapshot of the game state when the browser loads the page, so it is constructed when requested by the browser.  It is the only dynamically constructed Web page in the system.
+
+Both login and game pages have the same URL, which is the root path.
+
+### Web service content (Ajax)
+
+There is a single url used to store application state: __/save__. This is requested by the browser when the user clicks the save button.
 
 ## Case 1: Server start up
 
-__server -> fb__ Server requests its app token.  This requires the app to send its appId and appSecret.
+__server -> fb__ The server sends its Facebook app ID and app secret to obtain its Facebook app token.
 
 __server <- fb__ Facebook returns the app token.
 
@@ -35,7 +59,7 @@ Note: the app token only changes when the app secret is changed.  The app token 
 
 ### Case 2.1: the browser sends uid/secret in a cookie
 
-__browser -> server__ Browser sends GET request to '/' with __uid__ and _secret_ in cookie. 
+__browser -> server__ Browser sends GET request to '/' with __uid__ and _secret_ in cookie.
 
 __server -> db__ The server requests the document matching the uid and secret.
 
@@ -57,7 +81,7 @@ __browser <- server__ The server returns the game page.
 
 __browser -> server__ Browser sends GET request to '/' without __uid__ and _secret_ in cookie.
 
-This occurs when a) the user is accessing the app from a device for the first time, b) long-lived cookies are disabled in the browser, or c) a previously set cookie was deleted.
+This occurs when a) the user is accessing the app from a device for the first time, b) long-lived cookies are disabled in the browser, c) the cookie expired, or d) a previously set cookie was deleted.
 
 __browser <- server__ The server returns the login page.
 
@@ -93,7 +117,7 @@ This means the user is authenticated with Facebook and has authorized the app wi
 
 __server -> db__ The server requests from the database the document matching the uid.
 
-#### Case 3.2.1: The database returns zero documents
+#### Case 3.2.2.1: The database returns zero documents
 
 __server <- db__ The database returns zero documents.
 
@@ -103,7 +127,7 @@ __server <-> db__ The server stores an initial user document with uid, secret an
 
 __browser <- server__ The server returns the game page.
 
-#### Case 3.2.2: The database returns the user document
+#### Case 3.2.2.2: The database returns the user document
 
 __server <- db__ The database returns the user document.
 

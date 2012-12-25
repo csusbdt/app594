@@ -1,1 +1,1 @@
-web: node web.js
+web: node $NODE_ARGS web.js

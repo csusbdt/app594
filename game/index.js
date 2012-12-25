@@ -1,11 +1,12 @@
 var mongo = require('mongodb');
 var fb = require('../fb');
+var assert = require('assert');
 //var querystring = require('querystring');
 //var async = require('async');
 
-var mongoUri = 
-	process.env.MONGOLAB_URI || 
-	'mongodb://localhost:27017/app594d';
+//var mongoUri = 
+//	process.env.MONGO_URI || 
+//	'mongodb://localhost:27017/app594';
 
 var gameHtmlString = 'to be continued ...';
 
@@ -53,8 +54,73 @@ function createGameHtmlString(cb) {
 ////////////////////////////////////////////////////////////////////////
 
 // cb = function(err)
+/*
 function handleGamePageRequest(req, res) {
+  if (typeof req.params.token !== undefined) {
+    fb.exchangeAccessToken(req.params.token, function(err, secret, expires) {
+    
+    }
+  }
   res.send(gameHtmlString);
+}
+*/
+
+function init(cb) {
+  mongo.Db.connect(process.env.MONGO_URI, function (err, db) {
+    if (err) {
+      console.log("Connect err: " + err);
+      cb(err);
+      return;
+    }
+    var users = db.collection('users');
+    users.ensureIndex({ uid: 1 }, { unique: true, sparse: true });
+    cb();
+  });
+}
+
+function updateUser(args, cb) {
+  mongo.Db.connect(process.env.MONGO_URI, function (err, db) {
+    if (err) {
+      assert(err instanceof Error);
+      console.log("Connect err: " + err);
+      cb(err);
+      return;
+    }
+    var users = db.collection('users');
+    var query = { uid: args.uid };
+    var sort = []; // [['_uid' , 'asc']]
+    var update = { secret: args.secret, expires: args.expires };
+    var options = { new: true, upsert: true };
+    users.findAndModify(query, sort, update, options, function(err, user) {
+      if (err) {
+        assert(err instanceof Error);
+        console.log("findAndModify err: " + err);
+        cb(err);
+        return;
+      }
+      /*
+      if (user === null) {
+        var user = { 
+          uid: args.uid, 
+          secret: args.secret, 
+          expires: args.expires,
+          number: 0
+        };
+        users.insert(user, function(err) {
+          if (err) {
+            assert(err instanceof Error);
+            console.log("insert err: " + err);
+            cb(err);
+            return;
+          }
+          cb(user);
+        });
+        */
+      //} else {
+      if (typeof user.number === 'undefined') user.number = 0;
+      cb(user);
+    });
+  });
 }
 
 function login(err, newToken) {
@@ -100,4 +166,6 @@ function saveNumber(args, cb) {
 //exports.login = login;
 //exports.getNumber = getNumber;
 //exports.saveNumber = saveNumber;
-exports.html = handleGamePageRequest;
+exports.init = init;
+exports.updateUser = updateUser;
+
