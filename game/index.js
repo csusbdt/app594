@@ -67,13 +67,8 @@ function handleGamePageRequest(req, res) {
 
 function init(cb) {
   mongo.Db.connect(process.env.MONGO_URI, function (err, db) {
-    if (err) {
-      console.log("Connect err: " + err);
-      cb(err);
-      return;
-    }
-    var users = db.collection('users');
-    users.ensureIndex({ uid: 1 }, { unique: true, sparse: true });
+    if (err) return cb(err);
+    db.collection('users').ensureIndex({ uid: 1 }, { unique: true, sparse: true });
     cb();
   });
 }

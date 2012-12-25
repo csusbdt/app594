@@ -22,13 +22,9 @@ function init(cb) {
        '&client_secret=' + process.env.FACEBOOK_SECRET +
        '&grant_type=client_credentials';
   restler.get(url).on('complete', function(result) {
-    if (result instanceof Error) {
-      cb(result.message);
-    } else {
-      appToken = querystring.parse(result)['access_token'];
-      console.log('appToken acquired');
-      cb();
-    }
+    if (result instanceof Error) return cb(result);
+    appToken = querystring.parse(result)['access_token'];
+    cb();
   });  
 }
 

@@ -1,52 +1,24 @@
-var async = require('async');
-var http = require('http');
+var async   = require('async');
+var http    = require('http');
 var connect = require('connect');
-var fs = require('fs');
-var ejs = require('ejs');
-var assert = require('assert');
-var fb = require('./fb');
-var game = require('./game');
+var fs      = require('fs');
+var ejs     = require('ejs');
+var assert  = require('assert');
+var fb      = require('./fb');
+var game    = require('./game');
 
-var app = connect();
+if (process.env.FACEBOOK_APP_ID === undefined) throw new Error('FACEBOOK_APP_ID not defined');
+if (process.env.FACEBOOK_SECRET === undefined) throw new Error('FACEBOOK_SECRET not defined');
+if (process.env.MONGO_URI       === undefined) throw new Error('MONGO_URI not defined');
+if (process.env.PORT            === undefined) throw new Error('PORT not defined');
 
-var loginPage;
-var gamePage;
+var loginPage,
+    gamePage,
+    app = connect();
 
-function initLoginPage(cb) {
-  fs.readFile('views/login.ejs', 'utf8', function(err, file) {
-    if (err) { 
-      cb(err); 
-      return; 
-    }
-    var ejsArgs = { 
-      locals: { appId: process.env.FACEBOOK_APP_ID } 
-    };
-    loginPage = ejs.render(file, ejsArgs);
-    cb();
-  });
-}
 
-function initGamePage(cb) {
-  fs.readFile('views/game.ejs', 'utf8', function(err, file) {
-    if (err) { 
-      cb(err);
-      return;
-    }
-    gamePage = file;
-    cb();
-  });
-}
-
-var cookieParser = connect.cookieParser();
-
-//  app.use('/save', connect.bodyParser());
-//  app.use('/', connect.cookieParser());
-  app.use(connect.query());
-  app.use(connect.static(require('path').join(__dirname, 'public')));
-//  app.use(function(err, req, res, next) {
-//    console.error(err.stack);
-//    res.send(500, err.stack);
-//  });
+app.use(connect.query());
+app.use(connect.static(require('path').join(__dirname, 'public')));
 
 function returnGamePageFromCookie(cookieString, res) {
 console.log('cookie string = ' + cookieString);
@@ -135,59 +107,46 @@ app.use('/', function(req, res, next) {
         res.end(loginPage);
     } else {
       returnGamePageFromQuery(req, res);
-    }    
-
-/*
-  cookieParser(req, res, function() {
-    var cookies = req.cookies['app594'];
-console.log(cookies);
-    if (typeof cookies !== 'undefined') {
-      returnGamePageFromCookie(cookies[0], res);  
-    } else if(typeof req.query.token === 'undefined') {
-        res.end(loginPage);
-    } else {
-      returnGamePageFromQuery(req, res);
-    }    
-  });
-  */
+    }
 });
 
 app.use('/channel.html', fb.channel);
 
-/*
-app.post('/op/save-number', function(req, res) {
-  var args = {
-    accessToken: req.params.accessToken,
-    number: req.params.number
-  };
-  game.saveNumber(args, function(err, number) {
-    if (err) res.json({err: err});
-    else res.json({});
-  });
+app.use(function(err, req, res, next) {
+  console.error(err.stack);
+  res.end(500, err.stack);
 });
-*/
 
-function checkEnv(cb) {
-  if (process.env.FACEBOOK_APP_ID === undefined) {
-    cb(new Error('FACEBOOK_APP_ID not defined'));
-  } else if (process.env.FACEBOOK_SECRET === undefined) {
-    cb(new Error('FACEBOOK_SECRET not defined'));
-  } else if (process.env.MONGO_URI === undefined) {
-    cb(new Error('MONGO_URI not defined'));
-  } else if (process.env.PORT === undefined) {
-    cb(new Error('PORT not defined'));
-  } else {
-    cb();
-  }
-}
-
-async.parallel([checkEnv, initLoginPage, initGamePage, fb.init, game.init], function(err) {
-  if (err) {
-    console.log(err);
-  } else {
+async.parallel(
+  [
+    function(cb) {
+      fs.readFile('views/login.ejs', 'utf8', function(err, file) {
+        if (err) return cb(err);
+        loginPage = ejs.render(file, { locals: { appId: process.env.FACEBOOK_APP_ID } });
+        cb();
+      });
+    },
+    function(cb) {
+      fs.readFile('views/game.ejs', 'utf8', function(err, file) {
+        if (err) return cb(err);
+        gamePage = file;
+        cb();
+      });
+    },
+    function(cb) {
+      fb.init(function(err) { if(err) return cb(err); });
+      cb();
+    },
+    function(cb) {
+      game.init(function(err) { if(err) return cb(err); });
+      cb();
+    }
+  ],
+  function(err) {
+    if (err) throw err;
     http.createServer(app).listen(process.env.PORT, function(err) {
-      if (err) console.log(err);
+      if (err) throw err;
       else console.log("listening on " + process.env.PORT);
     });
   }
-});
+);
