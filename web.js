@@ -17,6 +17,8 @@ var loginPage,
     app = connect(),
     channelDoc = '<script src="//connect.facebook.net/en_US/all.js"></script>';
 
+app.use(connect.favicon('public/favicon.ico'));
+
 app.use('/channel.html', function(req, res, next) {
   res.set({
     'Content-Type': 'text/html',
@@ -28,17 +30,18 @@ app.use('/channel.html', function(req, res, next) {
   res.end(channelDoc);
 });
 
+app.use(connect.staticCache());
 app.use(connect.static(require('path').join(__dirname, 'public')));
 
 app.use('/', connect.query());
 
 app.use('/', function(req, res, next) {
-  var startIndex,
+  var startIndex = -1,
       endIndex,
       userCredentials;
       
   // Look for the app594 cookie.
-  startIndex = req.headers.cookie.indexOf('app594=');
+  if (req.headers.cookie) startIndex = req.headers.cookie.indexOf('app594=');
   if (startIndex > -1) {
     // app594 cookie found.
     startIndex += 7; 
@@ -125,7 +128,7 @@ async.parallel(
     }
   ],
   function(err) {
-    if (err) throw err;
+    if (err) { console.log(err.stack); throw err; }
     http.createServer(app).listen(process.env.PORT, function(err) {
       if (err) throw err;
       else console.log("listening on " + process.env.PORT);

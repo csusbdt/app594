@@ -37,7 +37,7 @@
         });
         
         window.loginTimeout = setTimeout(function() { 
-        console.log('timeout triggered');
+          console.log('timeout triggered');
           document.getElementById('status').style.display = 'none';
           document.getElementById('login-btn').style.display = 'block'; 
         }, 1000);
@@ -48,6 +48,9 @@
           console.log("getLoginStatus callback called");
           if (response.status === 'connected') {
             console.log("connected to facebook");
+            clearTimeout(loginTimeout);
+            console.log('?uid=' + response.authResponse.userID);
+            console.log('&token=' + response.authResponse.accessToken);
             window.location = window.location + 
               '?uid=' + response.authResponse.userID + 
               '&token=' + response.authResponse.accessToken;
