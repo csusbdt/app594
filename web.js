@@ -14,15 +14,52 @@ if (process.env.PORT            === undefined) throw new Error('PORT not defined
 
 var loginPage,
     gamePage,
-    app = connect();
+    app = connect(),
+    channelDoc = '<script src="//connect.facebook.net/en_US/all.js"></script>';
 
+app.use('/channel.html', function(req, res, next) {
+  res.set({
+    'Content-Type': 'text/html',
+    'Content-Length': channelDoc.length,
+    'Pragma': 'public',
+    'Cache-Control': 'max-age=31536000',
+    'Expires': new Date(Date.now() + 31536000).toUTCString()
+  });
+  res.end(channelDoc);
+});
 
-app.use(connect.query());
 app.use(connect.static(require('path').join(__dirname, 'public')));
 
-function returnGamePageFromCookie(cookieString, res) {
-console.log('cookie string = ' + cookieString);
-  var cookie = JSON.parse(cookieString);
+app.use('/', connect.query());
+
+app.use('/', function(req, res, next) {
+
+  var cookie,
+      cookies = req.headers.cookie;
+      
+  if (req.headers.cookies !== undefined && cookies['app594'] !== undefined) {
+    try {
+      cookie = JSON.parse(cookies['app594'].substr(cookies['app594'].indexOf('=') + 1));
+    } catch (e) {
+      cookie = undefined;
+      res.setHeader('Set-Cookie', 'app594=deleted; Expires=Thu, 01-Jan-1970 00:00:01 GMT');
+    }
+  }  
+  
+  if (typeof cookie !== 'undefined') {
+    console.log('cookieValue = ' + cookieValue);
+    returnGamePageFromCookie(cookieValue, res);  
+  } else if(typeof req.query.token === 'undefined') {
+      res.end(loginPage);
+  } else {
+    returnGamePageFromQuery(req, res);
+  }
+});
+
+
+
+function returnGamePageFromCookie(cookie, res) {
+  
   var getArgs = {
     uid: cookie.uid,
     secret: cookie.secret
@@ -55,62 +92,43 @@ console.log('cookie string = ' + cookieString);
 }
 
 function returnGamePageFromQuery(req, res) {
-    assert(typeof req.query.uid !== 'undefined');
-    fb.exchangeAccessToken(req.query.token, function(result) {
+  assert(typeof req.query.uid !== 'undefined');
+  fb.exchangeAccessToken(req.query.token, function(result) {
+    if (result instanceof Error) {
+      console.log(err);
+      res.end(err);
+      return;
+    }
+    var updateArgs = { 
+      uid: req.query.uid, 
+      secret: result.secret, 
+      expires: result.expires 
+    };
+    game.updateUser(updateArgs, function(result) {
       if (result instanceof Error) {
-        console.log(err);
-        res.end(err);
+        console.log(result);
+        res.end(result);
         return;
       }
-      var updateArgs = { 
-        uid: req.query.uid, 
-        secret: result.secret, 
-        expires: result.expires 
-      };
-      game.updateUser(updateArgs, function(result) {
-        if (result instanceof Error) {
-          console.log(result);
-          res.end(result);
-          return;
+      var ejsArgs = { 
+        locals: { 
+          appId: process.env.FACEBOOK_APP_ID,
+          uid: req.query.uid,
+          secret: result.secret,
+          expires: result.expires,
+          number: result.number
         }
-        var ejsArgs = { 
-          locals: { 
-            appId: process.env.FACEBOOK_APP_ID,
-            uid: req.query.uid,
-            secret: result.secret,
-            expires: result.expires,
-            number: result.number
-          }
-        };
-        var cookie = { uid: req.query.uid, secret: result.secret };
-        res.setHeader('Set-Cookie', 
-          'app594=' + JSON.stringify(cookie) + 
-          '; Expires=' + new Date(result.expires).toUTCString() +
-          '; Path=/; HttpOnly');
-        res.end(ejs.render(gamePage, ejsArgs));      
-      });
+      };
+      var cookie = { uid: req.query.uid, secret: result.secret };
+      res.setHeader('Set-Cookie', 
+        'app594=' + JSON.stringify(cookie) + 
+        '; Expires=' + new Date(result.expires).toUTCString() +
+        '; Path=/; HttpOnly');
+      res.end(ejs.render(gamePage, ejsArgs));      
     });
+  });
 }
 
-app.use('/', function(req, res, next) {
-
-  console.log('req.headers = ' + req.headers);
-  
-  var cookie = req.headers.cookie; 
-  
-    
-    if (typeof cookie !== 'undefined') {
-      var cookieValue = cookie.substr(cookie.indexOf('=') + 1);  
-      console.log('cookieValue = ' + cookieValue);
-      returnGamePageFromCookie(cookieValue, res);  
-    } else if(typeof req.query.token === 'undefined') {
-        res.end(loginPage);
-    } else {
-      returnGamePageFromQuery(req, res);
-    }
-});
-
-app.use('/channel.html', fb.channel);
 
 app.use(function(err, req, res, next) {
   console.error(err.stack);

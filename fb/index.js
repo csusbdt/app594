@@ -4,7 +4,6 @@ var querystring = require('querystring');
 //var async = require('async');
 var restler = require('restler');
 var appToken;
-var channelDoc = '<script src="//connect.facebook.net/en_US/all.js"></script>';
 
 ////////////////////////////////////////////////////////////////////////
 // Internal functions
@@ -28,16 +27,6 @@ function init(cb) {
   });  
 }
 
-function handleChannelRequest(req, res, next) {
-  res.set({
-    'Content-Type': 'text/html',
-    'Content-Length': channelDoc.length,
-    'Pragma': 'public',
-    'Cache-Control': 'max-age=31536000',
-    'Expires': new Date(Date.now() + 31536000).toUTCString()
-  });
-  res.end(channelDoc);
-}
 
 // cb = function(result) 
 function exchangeAccessToken(accessToken, cb) {
@@ -60,5 +49,5 @@ function exchangeAccessToken(accessToken, cb) {
 }
 
 exports.init = init;
-exports.channel = handleChannelRequest;
+//exports.channel = handleChannelRequest;
 exports.exchangeAccessToken = exchangeAccessToken;
