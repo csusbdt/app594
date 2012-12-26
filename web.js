@@ -15,6 +15,7 @@ if (process.env.PORT            === undefined) throw new Error('PORT not defined
 var loginPage,
     gamePage,
     app = connect(),
+    cookieDelete = 'app594=deleted; Expires=Thu, 01-Jan-1970 00:00:01 GMT; Path=/; HttpOnly',
     channelDoc = '<script src="//connect.facebook.net/en_US/all.js"></script>';
 
 app.use(connect.favicon('public/favicon.ico'));
@@ -38,13 +39,15 @@ app.use('/', connect.query());
 app.use('/', function(req, res, next) {
   var startIndex = -1,
       endIndex,
-      userCredentials;
+      userCredentials,
+      user = {};
       
   // Look for the app594 cookie.
   if (req.headers.cookie) startIndex = req.headers.cookie.indexOf('app594=');
   if (startIndex > -1) {
     // app594 cookie found.
-    startIndex += 7; 
+    console.log('4. app594 cookie found');
+    startIndex += 7;
     // Cookie value may end with ';' but not guaranteed.
     var endIndex = req.headers.cookie.indexOf(';', startIndex);
     if (endIndex === -1) endIndex = req.headers.cookie.length;
@@ -52,19 +55,22 @@ app.use('/', function(req, res, next) {
       userCredentials = JSON.parse(req.headers.cookie.substr(startIndex, endIndex - startIndex));
     } catch (e) {
       console.log('Bad app594 cookie.');
-      res.setHeader('Set-Cookie', 'app594=deleted; Expires=Thu, 01-Jan-1970 00:00:01 GMT');
+      res.setHeader('Set-Cookie', cookieDelete);
       res.redirect('/');
       return;
     }
     game.getUser(userCredentials.uid, function(user) {
-      if (user instanceof Error) throw err;
+      if (user instanceof Error) return next(err);
       if (user === null) {
-        res.setHeader('Set-Cookie', 'app594=deleted; Expires=Thu, 01-Jan-1970 00:00:01 GMT');
+        console.log('unexpected: user not found');
+        res.setHeader('Set-Cookie', cookieDelete);
         res.end(loginPage);
-      } else if (userCredentials !== user.secret) {
-        res.setHeader('Set-Cookie', 'app594=deleted; Expires=Thu, 01-Jan-1970 00:00:01 GMT');
+      } else if (userCredentials.secret !== user.secret) {
+        console.log('old or bad secret');
+        res.setHeader('Set-Cookie', cookieDelete);
         res.end(loginPage);
       } else {
+        console.log('5. returning game page');
         res.end(ejs.render(gamePage, {locals: { appId: process.env.FACEBOOK_APP_ID, user: user }}));
       }
     });
@@ -72,21 +78,21 @@ app.use('/', function(req, res, next) {
   }
 
   // Look for uid and short-term access token in URL from the login page.
-  if (req.query.token && req.query.uid) {
+  if (req.query.uid && req.query.token) {
+    console.log('2. access token passed through url');
     fb.exchangeAccessToken(req.query.token, function(result) {
       if (result instanceof Error) return next(result);
-      var updateArgs = { 
-        uid: req.query.uid, 
-        secret: result.secret, 
-        expires: result.expires 
-      };
-      game.updateUser(updateArgs, function(user) {
-        if (user instanceof Error) return next(user);
+      user.uid = req.query.uid; 
+      user.secret = result.secret; 
+      user.expires = result.expires;
+      game.saveSecret(user, function(err) {
+        if (err) return next(err);
         var cookieData = { uid: user.uid, secret: user.secret };
         res.setHeader('Set-Cookie', 
           'app594=' + JSON.stringify(cookieData) + 
           '; Expires=' + new Date(user.expires).toUTCString() +
           '; Path=/; HttpOnly');
+        console.log('3. returning game page');
         res.end(ejs.render(gamePage, {locals: { appId: process.env.FACEBOOK_APP_ID, user: user }}));
       });
     });
@@ -94,6 +100,7 @@ app.use('/', function(req, res, next) {
   }
   
   // The login page will return uid and short-term access token in URL.
+  console.log('1. returning login page');
   res.end(loginPage);
 });
 
