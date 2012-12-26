@@ -105,7 +105,7 @@ function updateUser(args, cb) {
     }
     var users = db.collection('users');
     var query = { uid: args.uid };
-    var sort = []; // [['_uid' , 'asc']]
+    var sort = [];
     var update = { secret: args.secret, expires: args.expires };
     var options = { new: true, upsert: true };
     users.findAndModify(query, sort, update, options, function(err, user) {
