@@ -1,20 +1,9 @@
-// Unless otherwise stated, callbacks have the form function(err).
-
 var querystring = require('querystring');
-//var async = require('async');
 var restler = require('restler');
+
 var appToken;
 
-////////////////////////////////////////////////////////////////////////
-// Internal functions
-////////////////////////////////////////////////////////////////////////
-
-
-////////////////////////////////////////////////////////////////////////
-// External functions
-////////////////////////////////////////////////////////////////////////
-
-function init(cb) {
+exports.init = function(cb) {
   var url = 
        'https://graph.facebook.com/oauth/access_token?' + 
        'client_id=' + process.env.FACEBOOK_APP_ID +
@@ -25,11 +14,11 @@ function init(cb) {
     appToken = querystring.parse(result)['access_token'];
     cb();
   });  
-}
+};
 
-
-// cb = function(result) 
-function exchangeAccessToken(accessToken, cb) {
+// Exchange a short-lived access token for a long-lived one,
+// which we call a secret.
+exports.exchangeAccessToken = function(accessToken, cb) {
   var url = 
        'https://graph.facebook.com/oauth/access_token' + 
        '?client_id=' + process.env.FACEBOOK_APP_ID +
@@ -37,17 +26,10 @@ function exchangeAccessToken(accessToken, cb) {
        '&grant_type=fb_exchange_token' +
        '&fb_exchange_token=' + accessToken;
   restler.get(url).on('complete', function(result) {
-    if (result instanceof Error) {
-      cb(result);
-    } else {    
-      cb({
-        secret: querystring.parse(result)['access_token'], 
-        expires: new Date(Date.now() + querystring.parse(result)['expires'] * 1000)
-      });
-    }
+    if (result instanceof Error) return cb(err);    
+    cb({
+      secret: querystring.parse(result)['access_token'], 
+      expires: new Date(Date.now() + querystring.parse(result)['expires'] * 1000)
+    });
   });  
-}
-
-exports.init = init;
-//exports.channel = handleChannelRequest;
-exports.exchangeAccessToken = exchangeAccessToken;
+};

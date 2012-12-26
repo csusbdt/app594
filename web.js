@@ -53,9 +53,12 @@ app.use('/', function(req, res, next) {
       res.redirect('/');
       return;
     }
-    game.getUser(userCredentials, function(user) {
+    game.getUser(userCredentials.uid, function(user) {
       if (user instanceof Error) throw err;
       if (user === null) {
+        res.setHeader('Set-Cookie', 'app594=deleted; Expires=Thu, 01-Jan-1970 00:00:01 GMT');
+        res.end(loginPage);
+      } else if (userCredentials !== user.secret) {
         res.setHeader('Set-Cookie', 'app594=deleted; Expires=Thu, 01-Jan-1970 00:00:01 GMT');
         res.end(loginPage);
       } else {
