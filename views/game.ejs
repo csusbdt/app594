@@ -7,12 +7,6 @@
   <body>
     <div id="fb-root"></div>
 
-<p>appId: <%= appId %></p>
-<p>uid: <%= user.uid %></p>
-<p>secret: <%= user.secret %></p>
-<p>expires: <%= user.expires %></p>
-<p>number: <%= user.gameState.number %></p>
-
     <div id="updating-view" style="display: none">
       <div>Updating...</div>
     </div>
@@ -21,14 +15,78 @@
       <div id="error">Error</div>
     </div>
     
-    <div id="game-view" style="display: none">
+    <div id="game-view">
       <div id="number"></div>
       <button id="increment-btn">Increment</button>
       <button id="save-btn" style="display: none">Save</button>
     </div>
     
     <script src="js/jquery-1.8.3.min.js"></script>
-    <script>
+    <script>    
+      var app = <%- app %>;
+
+      // define app.setView
+      (function() {
+        var currentView = 'updating-view';
+        app.setView = function(view) {
+          if (view == currentView) return;
+          $('#' + currentView).hide();
+          $('#' + view).show();
+          currentView = view;
+        }
+      })();
+
+      app.saveNumber = function() {
+        app.setView('updating-view');
+        $.ajax({
+          url: '/save',
+          data: {
+            uid: app.uid,
+            secret: app.secret,
+            gameState: JSON.stringify(app.gameState)
+          }
+        })
+        .done(function(data) {
+          if (data.err) {
+            $('#error').html(data.err);
+            app.setView('error-view');
+          } else if (data.login) {
+            $('#error').html('need to login into facebook again');
+            app.setView('error-view');
+          } else {
+            $('#number').html(app.gameState.number);
+            app.setView('game-view');
+          }
+        })
+        .fail(function(jqXHR, textStatus) {
+          console.log('textStatus: ' + textStatus);
+          console.log(jqXHR);
+          $('#error').html(textStatus);
+          app.setView('error-view');
+        });
+      };
+
+      $(function() {
+				$.ajaxSetup({
+					global: false,
+					type: "POST",
+					dataType: 'json',
+					cache: false  // appends a timstamp onto urls to bust caching; needed for iOS?
+				});
+				
+				$('#number').html(app.gameState.number);
+        
+        $('#increment-btn').click(function() {
+          ++app.gameState.number;
+          $('#number').html('' + app.gameState.number);
+          $('#save-btn').show();
+        });
+        
+        $('#save-btn').click(function() {
+          $('#save-btn').hide();				  
+          app.saveNumber();
+        });
+      });
     </script>
 
   </body>

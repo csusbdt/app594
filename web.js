@@ -3,6 +3,7 @@ var http    = require('http');
 var connect = require('connect');
 var fs      = require('fs');
 var ejs     = require('ejs');
+var querystring = require('querystring');
 var assert  = require('assert');
 var fb      = require('./fb');
 var game    = require('./game');
@@ -37,6 +38,9 @@ app.use(connect.static(require('path').join(__dirname, 'public')));
 app.use('/', connect.query());
 
 app.use('/', function(req, res, next) {
+  console.log('req.url = ' + req.url);
+  if (req.url !== '/' && req.url.substr(0, 2) !== '/?') return next();
+  
   var startIndex = -1,
       endIndex,
       userCredentials,
@@ -46,7 +50,6 @@ app.use('/', function(req, res, next) {
   if (req.headers.cookie) startIndex = req.headers.cookie.indexOf('app594=');
   if (startIndex > -1) {
     // app594 cookie found.
-    console.log('4. app594 cookie found');
     startIndex += 7;
     // Cookie value may end with ';' but not guaranteed.
     var endIndex = req.headers.cookie.indexOf(';', startIndex);
@@ -68,15 +71,13 @@ app.use('/', function(req, res, next) {
       }
       game.getGameState(user, function(err) {
         if (err) return next(err);
-        console.log('5. returning game page');
-        res.end(ejs.render(gamePage, {locals: { appId: process.env.FACEBOOK_APP_ID, user: user }}));
+        res.end(ejs.render(gamePage, {locals: { appId: process.env.FACEBOOK_APP_ID, app: JSON.stringify(user) }}));
       });
     });
   }
 
   // Look for uid and short-term access token in URL from the login page.
   else if (req.query.uid && req.query.token) {
-    console.log('2. access token passed through url');
     fb.exchangeAccessToken(req.query.token, function(result) {
       if (result instanceof Error) return next(result);
       user.uid = req.query.uid; 
@@ -92,7 +93,7 @@ app.use('/', function(req, res, next) {
         game.getGameState(user, function(err) {
           if (err) return next(err);
           console.log('3. returning game page');
-          res.end(ejs.render(gamePage, {locals: { appId: process.env.FACEBOOK_APP_ID, user: user }}));
+          res.end(ejs.render(gamePage, {locals: { appId: process.env.FACEBOOK_APP_ID, app: JSON.stringify(user) }}));
         });
       });
     });
@@ -100,7 +101,6 @@ app.use('/', function(req, res, next) {
 
   else {  
     // The login page will return uid and short-term access token in URL.
-    console.log('1. returning login page');
     res.end(loginPage);
   }
 });
@@ -108,8 +108,8 @@ app.use('/', function(req, res, next) {
 // Allow only POST requests beyond this point.
 app.use(function(req, res, next) {
   if (req.method !== 'POST') {
-    response.statusCode = 404;  // not found
-    res.end();
+    res.statusCode = 404;  // not found
+    res.end('not found');
   } else {
     next();
   }
@@ -122,6 +122,7 @@ app.use('/save', function(req, res, next) {
       body;
   req.setEncoding('utf8');
   req.on('data', function(chunk) {
+    console.log('chunk = ' + chunk)
     if (chunk.length > MAX_BODY) {
       return res.end();
     }
@@ -133,15 +134,25 @@ app.use('/save', function(req, res, next) {
   });
   req.on('end', function () {
     var user = {},
-        data = JSON.parse();
+        data;
+    try {
+      data = querystring.parse(body);
+    } catch (err) {
+      return next(err);
+    }
     user.uid = data.uid;
+    user.secret = data.secret;
     game.getSecret(user, function(err) {
       if (err) return next(err);
       if (data.secret !== user.secret) {
         res.setHeader('Set-Cookie', cookieDelete);
         return res.end('{ login: true }');
       }
-      user.gameState = data.gameState;
+      try {
+        user.gameState = JSON.parse(data.gameState);
+      } catch (err) {
+        return next(err);
+      }
       game.saveGameState(user, function(err) {
         if (err) return next(err);
         res.end('{}');  // all good
