@@ -25,7 +25,7 @@ var fb = require('../fb');
 // Make sure we can connect to database.
 exports.init = function(cb) {
   mongo.Db.connect(process.env.MONGO_URI, function (err, db) {
-    if (err) return cb(err);
+    if (err) return cb(new Error('failed to connect to database'));
     cb();
   });
 };

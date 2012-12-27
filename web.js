@@ -8,6 +8,9 @@ var assert  = require('assert');
 var fb      = require('./fb');
 var game    = require('./game');
 
+// http://www.smashingboxes.com/heroku-vs-amazon-web-services/
+// See http://policy.heroku.com/aup for limits on RAM and storage
+
 if (process.env.FACEBOOK_APP_ID === undefined) throw new Error('FACEBOOK_APP_ID not defined');
 if (process.env.FACEBOOK_SECRET === undefined) throw new Error('FACEBOOK_SECRET not defined');
 if (process.env.MONGO_URI       === undefined) throw new Error('MONGO_URI not defined');
@@ -18,6 +21,14 @@ var loginPage,
     app = connect(),
     cookieDelete = 'app594=deleted; Expires=Thu, 01-Jan-1970 00:00:01 GMT; Path=/; HttpOnly',
     channelDoc = '<script src="//connect.facebook.net/en_US/all.js"></script>';
+
+// Make sure messages are sent over https when deployed through Heroku.
+// See https://devcenter.heroku.com/articles/http-routing
+app.use('/', function(req, res, next) {
+  if (req.headers['X-Forwarded-Proto'] === 'https') next();  // case sensitive?
+  //if (req.headers['x-forwarded-proto'] === 'https') next();
+  res.redirect("https://" + req.headers.host + req.url);
+});
 
 app.use(connect.favicon('public/favicon.ico'));
 
@@ -183,21 +194,23 @@ async.parallel(
       });
     },
     function(cb) {
-      fb.init(function(err) { if(err) return cb(err); });
-      cb();
+      fb.init(function(err) { 
+        if(err) return cb(err); 
+        cb();
+      });
     },
     function(cb) {
-      game.init(function(err) { if(err) return cb(err); });
-      cb();
-    }
-  ],
-  function(err) {
-    if (err) { console.log(err.stack); }
-    else {
-      http.createServer(app).listen(process.env.PORT, function(err) {
-        if (err) throw err;
-        else console.log("listening on " + process.env.PORT);
+      game.init(function(err) { 
+        if(err) return cb(err); 
+        cb();
       });
     }
+  ],
+  function(err, result) {
+    if (err) return console.log(err);
+    http.createServer(app).listen(process.env.PORT, function(err) {
+      if (err) return console.log(err);
+      console.log("listening on " + process.env.PORT);
+    });
   }
 );

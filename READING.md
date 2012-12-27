@@ -27,5 +27,8 @@ Device detection may no longer be relevant; css media queries may be sufficient.
 - [WURFL](http://wurfl.sourceforge.net/) Free trial and $5 per month for starting plan.  Also see [article](http://www.packtpub.com/article/adapting-user-devices-mobile-web-technology).
 - []()
 
+## Read later when get a chance
+
+- http://mathiasbynens.be/notes/javascript-encoding
 
 
