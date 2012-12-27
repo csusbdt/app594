@@ -2,51 +2,52 @@ var mongo = require('mongodb');
 var assert = require('assert');
 var fb = require('../fb');
 
-//var ObjectID = mongo.ObjectID;
+/////////////////////////////////////////////////////////////////////////////////
+//
+// How this module is patterned:
+//
+// The functions in this module take incomplete user objects as input.
+//
+// The uid property of the user object is mapped to _id in the database.
+//
+// The get functions use the uid from the user object to get one
+// or more properties from the database, and then adds these properties to 
+// the user object.
+//
+// The save functions use the uid and one or more properties from the
+// user object, and writes these into the database.
+//
+// The callback functions all have the same signature: function(err), where
+// err will be undefined or an instance of Error.
+//
+/////////////////////////////////////////////////////////////////////////////////
 
-// Notes:
-// (1) A "user" document in code may not include all the data from the database.
-// (2) user.gameState is undefined until first call to saveGameState.
-// (3) user.uid is mapped to the mongo key field _id
-
+// Make sure we can connect to database.
 exports.init = function(cb) {
   mongo.Db.connect(process.env.MONGO_URI, function (err, db) {
     if (err) return cb(err);
-//    db.collection('users').ensureIndex({ uid: 1 }, { unique: true, sparse: true });
     cb();
   });
 };
 
-exports.getUser = function(uid, cb) {
+// Input: user.uid
+// Reads: user.secret, user.expires
+exports.getSecret = function(user, cb) {
+  console.log('getting secret');
   mongo.Db.connect(process.env.MONGO_URI, function (err, db) {
     if (err) return cb(err);
-    db.collection('users').findOne({ _id: uid }, function(err, user) {
-      if (err) return cb(err);
-      if (user.gameState === undefined) user.gameState = { number: 0 };
-      user.uid = uid;
-      delete user._id;
-      cb(user);
-    });
-  });
-};
-
-exports.saveSecret = function(user, cb) {
-  console.log('saving secret: ' + user.uid + " " + user.secret);
-  mongo.Db.connect(process.env.MONGO_URI, function (err, db) {
-    if (err) return cb(err);
-    db.collection('users').findAndModify(
-      { _id: user.uid },  // query
-      [],  // sort
-      { _id: user.uid, secret: user.secret, expires: user.expires },  // update
-      { 'new': false, upsert: true },  // options
+    db.collection('users').findOne(
+      { _id: user.uid }, 
+      { secret: 1, expires: 1, _id: 0 }, 
       function(err, dbUser) {
         if (err) return cb(err);
-        if (dbUser && dbUser.gameState) {
-          console.log('gameState existing');
-          user.gameState = dbUser.gameState;
+        if (dbUser) {
+          user.secret = dbUser.secret;
+          user.expires = dbUser.expires;
+          console.log('user.secret = ' + dbUser.secret);
+          console.log('user.expires = ' + dbUser.expires);
         } else {
-          console.log('gameState not existing');
-          user.gameState = { number: 0 };
+          console.log('WARNING: user not found');
         }
         cb();
       }
@@ -54,15 +55,61 @@ exports.saveSecret = function(user, cb) {
   });
 };
 
-/*
-exports.saveNumber = function(args, cb) {
-  var user = tokens[args.accessToken];
-  if (typeof user === 'undefined') {
-    cb('unauthorized');
-  } else {
-    user.number = args.number;
-    cb(null);
-  }
+// Input: user.uid, user.secret, user.expires
+// Writes: user.secret, user.expires
+// Note: This function creates user documents when needed.
+exports.saveSecret = function(user, cb) {
+  console.log('saving secret: ' + user.uid + " " + user.secret);
+  mongo.Db.connect(process.env.MONGO_URI, function (err, db) {
+    if (err) return cb(err);
+    db.collection('users').update(
+      { _id: user.uid }, 
+      { $set: { secret: user.secret, expires: user.expires } },
+      { safe: true, upsert: true },
+      function(err) {
+        if (err) return cb(err);
+        cb();
+      }
+    );
+  });
 };
-*/
 
+// Input: user.uid
+// Reads: user.gameState
+exports.getGameState = function(user, cb) {
+  console.log('getting game state');
+  mongo.Db.connect(process.env.MONGO_URI, function (err, db) {
+    if (err) return cb(err);
+    db.collection('users').findOne(
+      { _id: user.uid }, 
+      { gameState: 1, _id: 0 }, 
+      function(err, dbUser) {
+        if (err) return cb(err);
+        if (dbUser.gameState) {
+          user.gameState = dbUser.gameState;
+        } else {
+          user.gameState = { number: 0 }
+        }
+        cb();
+      }
+    );
+  });
+};
+
+// Input: user.uid, user.gameState
+// Writes: user.gameState
+exports.saveGameState = function(user, cb) {
+  console.log('getting game state');
+  mongo.Db.connect(process.env.MONGO_URI, function (err, db) {
+    if (err) return cb(err);
+    db.collection('users').update(
+      { _id: user.uid }, 
+      { $set: { gameState: user.gameState } },
+      { safe: true },
+      function(err) {
+        if (err) return cb(err);
+        cb();
+      }
+    );
+  });
+};

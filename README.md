@@ -51,9 +51,9 @@ Check that the app is running by going to the following URL in a browser.
 
 ## Module documentation
 
-- [express](http://expressjs.com/)
-- [asynch](https://github.com/caolan/async) may not use
-- [faceplate](https://github.com/heroku/faceplate)
+- [asynch](https://github.com/caolan/async) 
+- [MongoDB Documentation](http://docs.mongodb.org/manual/)
+- [MongoDB Javascript driver](https://github.com/mongodb/node-mongodb-native)
 
 ## Notes
 

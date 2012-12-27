@@ -31,7 +31,7 @@ app.use('/channel.html', function(req, res, next) {
   res.end(channelDoc);
 });
 
-app.use(connect.staticCache());
+//app.use(connect.staticCache());
 app.use(connect.static(require('path').join(__dirname, 'public')));
 
 app.use('/', connect.query());
@@ -59,26 +59,23 @@ app.use('/', function(req, res, next) {
       res.redirect('/');
       return;
     }
-    game.getUser(userCredentials.uid, function(user) {
-      if (user instanceof Error) return next(err);
-      if (user === null) {
-        console.log('unexpected: user not found');
+    user.uid = userCredentials.uid;
+    game.getSecret(user, function(err) {
+      if (err) return next(err);
+      if (user.secret === undefined || userCredentials.secret !== user.secret) {
         res.setHeader('Set-Cookie', cookieDelete);
-        res.end(loginPage);
-      } else if (userCredentials.secret !== user.secret) {
-        console.log('old or bad secret');
-        res.setHeader('Set-Cookie', cookieDelete);
-        res.end(loginPage);
-      } else {
+        return res.end(loginPage);
+      }
+      game.getGameState(user, function(err) {
+        if (err) return next(err);
         console.log('5. returning game page');
         res.end(ejs.render(gamePage, {locals: { appId: process.env.FACEBOOK_APP_ID, user: user }}));
-      }
+      });
     });
-    return;
   }
 
   // Look for uid and short-term access token in URL from the login page.
-  if (req.query.uid && req.query.token) {
+  else if (req.query.uid && req.query.token) {
     console.log('2. access token passed through url');
     fb.exchangeAccessToken(req.query.token, function(result) {
       if (result instanceof Error) return next(result);
@@ -92,16 +89,65 @@ app.use('/', function(req, res, next) {
           'app594=' + JSON.stringify(cookieData) + 
           '; Expires=' + new Date(user.expires).toUTCString() +
           '; Path=/; HttpOnly');
-        console.log('3. returning game page');
-        res.end(ejs.render(gamePage, {locals: { appId: process.env.FACEBOOK_APP_ID, user: user }}));
+        game.getGameState(user, function(err) {
+          if (err) return next(err);
+          console.log('3. returning game page');
+          res.end(ejs.render(gamePage, {locals: { appId: process.env.FACEBOOK_APP_ID, user: user }}));
+        });
       });
     });
-    return;
   }
-  
-  // The login page will return uid and short-term access token in URL.
-  console.log('1. returning login page');
-  res.end(loginPage);
+
+  else {  
+    // The login page will return uid and short-term access token in URL.
+    console.log('1. returning login page');
+    res.end(loginPage);
+  }
+});
+
+// Allow only POST requests beyond this point.
+app.use(function(req, res, next) {
+  if (req.method !== 'POST') {
+    response.statusCode = 404;  // not found
+    res.end();
+  } else {
+    next();
+  }
+});
+
+//app.use(connect.bodyParser());
+
+app.use('/save', function(req, res, next) {
+  var MAX_BODY = 256,  // what about max header?
+      body;
+  req.setEncoding('utf8');
+  req.on('data', function(chunk) {
+    if (chunk.length > MAX_BODY) {
+      return res.end();
+    }
+    if (body === undefined) body = chunk;
+    else body += chunk;
+    if (body.length > MAX_BODY) {
+      return res.end();
+    }
+  });
+  req.on('end', function () {
+    var user = {},
+        data = JSON.parse();
+    user.uid = data.uid;
+    game.getSecret(user, function(err) {
+      if (err) return next(err);
+      if (data.secret !== user.secret) {
+        res.setHeader('Set-Cookie', cookieDelete);
+        return res.end('{ login: true }');
+      }
+      user.gameState = data.gameState;
+      game.saveGameState(user, function(err) {
+        if (err) return next(err);
+        res.end('{}');  // all good
+      });
+    });
+  });
 });
 
 app.use(function(err, req, res, next) {
@@ -135,10 +181,12 @@ async.parallel(
     }
   ],
   function(err) {
-    if (err) { console.log(err.stack); throw err; }
-    http.createServer(app).listen(process.env.PORT, function(err) {
-      if (err) throw err;
-      else console.log("listening on " + process.env.PORT);
-    });
+    if (err) { console.log(err.stack); }
+    else {
+      http.createServer(app).listen(process.env.PORT, function(err) {
+        if (err) throw err;
+        else console.log("listening on " + process.env.PORT);
+      });
+    }
   }
 );
