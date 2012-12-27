@@ -27,7 +27,7 @@ var loginPage,
 // Make sure messages are sent over https when deployed through Heroku.
 // See https://devcenter.heroku.com/articles/http-routing
 app.use('/', function(req, res, next) {
-  if (req.headers['X-Forwarded-Proto'] === 'https') next();
+  if (req.headers['X-Forwarded-Proto'] === 'https') return next();
   res.writeHead(302, { 'Location': "https://" + req.headers.host + req.url });
   res.end();
 });
