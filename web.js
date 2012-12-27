@@ -10,6 +10,8 @@ var game    = require('./game');
 
 // http://www.smashingboxes.com/heroku-vs-amazon-web-services/
 // See http://policy.heroku.com/aup for limits on RAM and storage
+// For caching files, use http://nodejs.org/api/process.html#process_process_memoryusage
+// to check for 512 MB memory limit.
 
 if (process.env.FACEBOOK_APP_ID === undefined) throw new Error('FACEBOOK_APP_ID not defined');
 if (process.env.FACEBOOK_SECRET === undefined) throw new Error('FACEBOOK_SECRET not defined');
