@@ -13,6 +13,12 @@ var game    = require('./game');
 // For caching files, use http://nodejs.org/api/process.html#process_process_memoryusage
 // to check for 512 MB memory limit.
 
+// See the following for performance tips.
+// http://engineering.linkedin.com/nodejs/blazing-fast-nodejs-10-performance-tips-linkedin-mobile
+// See the section "2. Turn off socket pooling" in particular.
+// Here is a possible solution for static files: https://github.com/essh/heroku-buildpack-nginx
+// In the meantime, I will read all static files into memory and send from there.
+
 if (process.env.FACEBOOK_APP_ID === undefined) throw new Error('FACEBOOK_APP_ID not defined');
 if (process.env.FACEBOOK_SECRET === undefined) throw new Error('FACEBOOK_SECRET not defined');
 if (process.env.MONGO_URI       === undefined) throw new Error('MONGO_URI not defined');
@@ -28,6 +34,7 @@ var loginPage,
 // See https://devcenter.heroku.com/articles/http-routing
 app.use('/', function(req, res, next) {
   if (req.headers['x-forwarded-proto'] === 'https') return next();
+  if (req.headers['x-forwarded-proto'] === undefined) return next();
   res.writeHead(302, { 'Location': "https://" + req.headers.host + req.url });
   res.end();
 });
@@ -35,7 +42,7 @@ app.use('/', function(req, res, next) {
 app.use(connect.favicon('public/favicon.ico'));
 
 app.use('/channel.html', function(req, res, next) {
-  res.set({
+  res.writeHead(200, {
     'Content-Type': 'text/html',
     'Content-Length': channelDoc.length,
     'Pragma': 'public',
@@ -43,6 +50,19 @@ app.use('/channel.html', function(req, res, next) {
     'Expires': new Date(Date.now() + 31536000).toUTCString()
   });
   res.end(channelDoc);
+});
+
+app.use('/mem', function(req, res, next) {
+  var mem = process.memoryUsage(),
+      page = '<p>rss = ' + Math.ceil(mem.rss / 1024 / 1024) + ' MB</p>' +  
+             '<p>heapTotal = ' + Math.ceil(mem.heapTotal / 1024 / 1024) + ' MB</p>' +
+             '<p>heapUsed = ' + Math.ceil(mem.heapUsed / 1024 / 1024) + ' MB</p>';
+  res.writeHead(200, {
+    'Content-Type': 'text/html',
+    'Content-Length': page.length,
+    'Cache-Control': 'no-cache, no-store'
+  });
+  res.end(page);
 });
 
 //app.use(connect.staticCache());
