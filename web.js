@@ -19,6 +19,10 @@ var game    = require('./game');
 // Here is a possible solution for static files: https://github.com/essh/heroku-buildpack-nginx
 // In the meantime, I will read all static files into memory and send from there.
 
+// Refer to following for caching
+// https://devcenter.heroku.com/articles/increasing-application-performance-with-http-cache-headers
+
+
 if (process.env.FACEBOOK_APP_ID === undefined) throw new Error('FACEBOOK_APP_ID not defined');
 if (process.env.FACEBOOK_SECRET === undefined) throw new Error('FACEBOOK_SECRET not defined');
 if (process.env.MONGO_URI       === undefined) throw new Error('MONGO_URI not defined');
