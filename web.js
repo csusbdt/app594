@@ -18,6 +18,8 @@ var req_memfile = require('./req_memfile');
 // Refer to following for caching
 // https://devcenter.heroku.com/articles/increasing-application-performance-with-http-cache-headers
 
+// For slug size, see https://devcenter.heroku.com/articles/slug-compiler
+// See https://devcenter.heroku.com/articles/s3 for asset storage
 
 if (process.env.FACEBOOK_APP_ID === undefined) throw new Error('FACEBOOK_APP_ID not defined');
 if (process.env.FACEBOOK_SECRET === undefined) throw new Error('FACEBOOK_SECRET not defined');
