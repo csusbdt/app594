@@ -1,6 +1,7 @@
 var url = require('url');
 var fs = require('fs');
 var ejs = require('ejs');
+
 var game = require('../game');
 var cookie = require('../app_cookie');
 var fb = require('../fb');
@@ -28,6 +29,22 @@ function error(req, res, err) {
   console.log(err.message);
   res.statusCode = 500;
   res.end(err.message);
+}
+
+function handleRootRequest(req, res) {
+  var userCredentials = cookie.extract(req);
+  
+  console.log('HEREHRHERHEREHR');
+  if (userCredentials === undefined) console.log('userCredentials is undefined');
+  else console.log('userCredentials = ' + JSON.stringify(userCredentials));
+  
+  if (userCredentials) {
+    processUserCredentials(req, res, userCredentials);
+  } else if (req.url.substr(0, 2) === '/?') {
+    processShortLivedToken(req, res);
+  } else {
+    returnLoginPage(req, res);
+  }
 }
 
 function returnLoginPage(req, res) {
@@ -59,18 +76,8 @@ function returnGamePage(req, res, user) {
   });
 }
 
-function handleRootRequest(req, res) {
-  var userCredentials = cookie.extract(req);
-  if (userCredentials) {
-    processUserCredentials(req, res, userCredentials);
-  } else if (req.url.substr(0, 2) === '/?') {
-    processShortLivedToken(req, res);
-  } else {
-    returnLoginPage(req, res);
-  }
-}
-
 function processUserCredentials(req, res, userCredentials) {
+console.log('processing user credentials');
   var user = {};
   user.uid = userCredentials.uid;
   game.getSecret(user, function(err) {
