@@ -26,6 +26,7 @@ var fb = require('../fb');
 exports.init = function(cb) {
   mongo.Db.connect(process.env.MONGO_URI, function (err, db) {
     if (err) return cb(new Error('failed to connect to database'));
+    db.close(); // in case another init method fails, program will exit
     cb();
   });
 };
@@ -33,7 +34,6 @@ exports.init = function(cb) {
 // Input: user.uid
 // Reads: user.secret, user.expires
 exports.getSecret = function(user, cb) {
-  console.log('getting secret');
   mongo.Db.connect(process.env.MONGO_URI, function (err, db) {
     if (err) return cb(err);
     db.collection('users').findOne(
@@ -44,8 +44,6 @@ exports.getSecret = function(user, cb) {
         if (dbUser) {
           user.secret = dbUser.secret;
           user.expires = dbUser.expires;
-          console.log('user.secret = ' + dbUser.secret);
-          console.log('user.expires = ' + dbUser.expires);
         } else {
           console.log('WARNING: user not found');
         }
@@ -59,7 +57,6 @@ exports.getSecret = function(user, cb) {
 // Writes: user.secret, user.expires
 // Note: This function creates user documents when needed.
 exports.saveSecret = function(user, cb) {
-  console.log('saving secret: ' + user.uid + " " + user.secret);
   mongo.Db.connect(process.env.MONGO_URI, function (err, db) {
     if (err) return cb(err);
     db.collection('users').update(
@@ -77,7 +74,6 @@ exports.saveSecret = function(user, cb) {
 // Input: user.uid
 // Reads: user.gameState
 exports.getGameState = function(user, cb) {
-  console.log('getting game state');
   mongo.Db.connect(process.env.MONGO_URI, function (err, db) {
     if (err) return cb(err);
     db.collection('users').findOne(
@@ -99,7 +95,6 @@ exports.getGameState = function(user, cb) {
 // Input: user.uid, user.gameState
 // Writes: user.gameState
 exports.saveGameState = function(user, cb) {
-  console.log('getting game state');
   mongo.Db.connect(process.env.MONGO_URI, function (err, db) {
     if (err) return cb(err);
     db.collection('users').update(

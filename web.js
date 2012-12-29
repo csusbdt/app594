@@ -1,12 +1,13 @@
-var async   = require('async');
-var http    = require('http');
-var connect = require('connect');
-var fs      = require('fs');
-var ejs     = require('ejs');
+var async       = require('async');
+var http        = require('http');
+var connect     = require('connect');
+var fs          = require('fs');
+var ejs         = require('ejs');
 var querystring = require('querystring');
-var assert  = require('assert');
-var fb      = require('./fb');
-var game    = require('./game');
+var assert      = require('assert');
+var fb          = require('./fb');
+var game        = require('./game');
+var memfiles    = require('./memfiles');
 
 // http://www.smashingboxes.com/heroku-vs-amazon-web-services/
 // See http://policy.heroku.com/aup for limits on RAM and storage
@@ -70,19 +71,16 @@ app.use('/mem', function(req, res, next) {
 });
 
 //app.use(connect.staticCache());
-app.use(connect.static(require('path').join(__dirname, 'public')));
+//app.use(connect.static(require('path').join(__dirname, 'public')));
 
 app.use('/', connect.query());
 
 app.use('/', function(req, res, next) {
-  console.log('req.url = ' + req.url);
-  if (req.url !== '/' && req.url.substr(0, 2) !== '/?') return next();
-  
+  if (req.url !== '/' && req.url.substr(0, 2) !== '/?') return next();  
   var startIndex = -1,
       endIndex,
       userCredentials,
       user = {};
-      
   // Look for the app594 cookie.
   if (req.headers.cookie) startIndex = req.headers.cookie.indexOf('app594=');
   if (startIndex > -1) {
@@ -142,6 +140,7 @@ app.use('/', function(req, res, next) {
   }
 });
 
+/*
 // Allow only POST requests beyond this point.
 app.use(function(req, res, next) {
   if (req.method !== 'POST') {
@@ -151,15 +150,13 @@ app.use(function(req, res, next) {
     next();
   }
 });
-
-//app.use(connect.bodyParser());
+*/
 
 app.use('/save', function(req, res, next) {
   var MAX_BODY = 256,  // what about max header?
       body;
   req.setEncoding('utf8');
   req.on('data', function(chunk) {
-    console.log('chunk = ' + chunk)
     if (chunk.length > MAX_BODY) {
       return res.end();
     }
@@ -198,6 +195,8 @@ app.use('/save', function(req, res, next) {
   });
 });
 
+app.use(memfiles());
+
 app.use(function(err, req, res, next) {
   console.error(err.stack);
   res.end(500, err.stack);
@@ -216,6 +215,12 @@ async.parallel(
       fs.readFile('views/game.ejs', 'utf8', function(err, file) {
         if (err) return cb(err);
         gamePage = file;
+        cb();
+      });
+    },
+    function(cb) {
+      memfiles.init(function(err) { 
+        if(err) return cb(err); 
         cb();
       });
     },
