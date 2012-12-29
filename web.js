@@ -1,10 +1,10 @@
 var async       = require('async');
 
 var server      = require('./server');
-var game        = require('./game');
-var fb          = require('./fb');
 var req_root    = require('./req_root');
 var req_memfile = require('./req_memfile');
+var game        = require('./game');
+var fb          = require('./fb');
 
 // http://www.smashingboxes.com/heroku-vs-amazon-web-services/
 // See http://policy.heroku.com/aup for limits on RAM and storage

@@ -19,6 +19,10 @@
       <div id="number"></div>
       <button id="increment-btn">Increment</button>
       <button id="save-btn" style="display: none">Save</button>
+      
+      <div>
+        <img id="picture" />
+      </div>
     </div>
     
     <script src="js/jquery-1.8.3.min.js"></script>
@@ -86,6 +90,8 @@
           $('#save-btn').hide();				  
           app.saveNumber();
         });
+        
+        $('#picture').attr('src', 'http://graph.facebook.com/' + app.uid + '/picture?type=normal');
       });
     </script>
 
