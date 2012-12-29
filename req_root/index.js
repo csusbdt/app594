@@ -33,11 +33,6 @@ function error(req, res, err) {
 
 function handleRootRequest(req, res) {
   var userCredentials = cookie.extract(req);
-  
-  console.log('HEREHRHERHEREHR');
-  if (userCredentials === undefined) console.log('userCredentials is undefined');
-  else console.log('userCredentials = ' + JSON.stringify(userCredentials));
-  
   if (userCredentials) {
     processUserCredentials(req, res, userCredentials);
   } else if (req.url.substr(0, 2) === '/?') {
@@ -77,7 +72,6 @@ function returnGamePage(req, res, user) {
 }
 
 function processUserCredentials(req, res, userCredentials) {
-console.log('processing user credentials');
   var user = {};
   user.uid = userCredentials.uid;
   game.getSecret(user, function(err) {
