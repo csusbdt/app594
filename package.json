@@ -3,9 +3,7 @@
     "version": "0.0.1",
     "description": "App illustrating integration of MongoDB, Nodejs, Heroku, and Facebook",
     "dependencies": {
-        "connect": "2.7.1",
         "ejs": "0.8.3",
-        "restler": "2.0.1",
         "mongodb": "1.2.6",
         "async": "0.1.22"
     },
