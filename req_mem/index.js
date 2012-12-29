@@ -14,4 +14,4 @@ function mem(req, res) {
     'Cache-Control': 'no-cache, no-store'
   });
   res.end(page);
-});
+}

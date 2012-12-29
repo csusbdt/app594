@@ -1,6 +1,5 @@
 var mongo = require('mongodb');
-//var assert = require('assert');
-var fb = require('./fb');
+var fb = require('../fb');
 
 /////////////////////////////////////////////////////////////////////////////////
 //

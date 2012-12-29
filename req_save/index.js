@@ -1,5 +1,6 @@
 var querystring = require('querystring');
-var cookie = require('./app_cookie');
+var cookie = require('../app_cookie');
+var game = require('../game');
 
 exports = module.exports = function() {
   return req_save;
@@ -10,7 +11,7 @@ function error(req, res, err) {
   res.end(500, { error: err.message });
 }
 
-function req_save = function(req, res) {
+function req_save(req, res) {
   if (req.method !== 'POST') return error(req, res, new Error('not supported'));
   var MAX_BODY = 256,  // what about max header?
       body;

@@ -1,8 +1,9 @@
 var url = require('url');
 var fs = require('fs');
 var ejs = require('ejs');
-var game = require('./game');
-var cookie = require('./app_cookie');
+var game = require('../game');
+var cookie = require('../app_cookie');
+var fb = require('../fb');
 
 var loginPage,
     gamePageTemplate;
@@ -11,7 +12,7 @@ exports = module.exports = function() {
   return handleRootRequest;
 }
 
-exports.init = function(err) {
+exports.init = function(cb) {
   fs.readFile('views/login.ejs', 'utf8', function(err, file) {
     if (err) return cb(err);
     loginPage = ejs.render(file, { locals: { appId: process.env.FACEBOOK_APP_ID } });
@@ -35,7 +36,7 @@ function returnLoginPage(req, res) {
     'Content-Length': loginPage.length,
     'Pragma': 'no-cache',
     'Cache-Control': 'no-cache, no-store',
-    'Set-Cookie', cookie.cookieDelete  // in case of bad cookie
+    'Set-Cookie': cookie.cookieDelete  // in case of bad cookie
   });
   res.end(loginPage);
 }
@@ -52,40 +53,21 @@ function returnGamePage(req, res, user) {
       'Content-Length': page.length,
       'Pragma': 'no-cache',
       'Cache-Control': 'no-cache, no-store',
-      'Set-Cookie', cookie(user)
+      'Set-Cookie': cookie(user)
     });
     res.end(page);
   });
 }
 
 function handleRootRequest(req, res) {
-  var userCredentials = extractUserCredentialsFromCookie(req, res);
+  var userCredentials = cookie.extract(req);
   if (userCredentials) {
     processUserCredentials(req, res, userCredentials);
-  } else if (req.url.substr(0, 2) !== '/?') {
-    processQuery(req, res);
+  } else if (req.url.substr(0, 2) === '/?') {
+    processShortLivedToken(req, res);
   } else {
     returnLoginPage(req, res);
   }
-}
-
-function extractUserCredentialsFromCookie(req, res) {
-  var userCredentials;
-  if (req.headers.cookie === undefined) return undefined;
-  var startIndex = req.headers.cookie.indexOf(appCookieName);
-  if (startIndex === -1) return undefined;
-  startIndex += appCookieName.length + 1;
-  // Cookie value may end with ';' but not guaranteed.
-  var onePastEndIndex = req.headers.cookie.indexOf(';', startIndex);
-  if (onePastEndIndex === -1) onePastEndIndex = req.headers.cookie.length;
-  try {
-    userCredentials = JSON.parse(req.headers.cookie.substring(startIndex, onePastEndIndex));
-  } catch (e) {
-    console.log('Bad app cookie.');
-    res.setHeader('Set-Cookie', cookie.cookieDelete);  // delete bad cookie
-    return undefined;  // return login page
-  }
-  return userCredentials;
 }
 
 function processUserCredentials(req, res, userCredentials) {
@@ -106,12 +88,11 @@ function processShortLivedToken(req, res) {
   var query, token, user = {};
   try {
     query = url.parse(req.url, true).query;
-  } catch (e) {
-    console.log(e.message);
+  } catch (err) {
+    console.log(err.message);
     query = {};
   }
   if (query.token === undefined || query.uid === undefined) {
-    console.log(e.message);
     res.redirect('/');  // clear out bad query
     return;
   }
@@ -125,4 +106,4 @@ function processShortLivedToken(req, res) {
       returnGamePage(req, res, user);    
     });
   });
-});
+};

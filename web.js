@@ -1,10 +1,10 @@
-var async        = require('async');
+var async       = require('async');
 
-var server       = require('./server');
-var game         = require('./game');
-var fb           = require('./fb');
-var req_root     = require('./req_root');
-var req_memfiles = require('./req_mem_files');
+var server      = require('./server');
+var game        = require('./game');
+var fb          = require('./fb');
+var req_root    = require('./req_root');
+var req_memfile = require('./req_memfile');
 
 // http://www.smashingboxes.com/heroku-vs-amazon-web-services/
 // See http://policy.heroku.com/aup for limits on RAM and storage
@@ -32,7 +32,7 @@ async.parallel(
       });
     },
     function(cb) {
-      req_memfiles.init(function(err) { 
+      req_memfile.init(function(err) { 
         if (err) cb(err); else cb();
       });
     },

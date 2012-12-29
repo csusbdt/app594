@@ -1,19 +1,19 @@
 var http        = require('http');
-var url         = require("url");
+var url         = require('url');
 
-var root    = require("./req_root")();
-var root    = require("./req_save")();
-var channel = require("./req_channel")();
-var mem     = require("./req_mem")();
-var memfile = require('./req_memfile')();
+var root    = require('../req_root')();
+var save    = require('../req_save')();
+var channel = require('../req_channel')();
+var mem     = require('../req_mem')();
+var memfile = require('../req_memfile')();
 
-function route(req, resp) {
+function route(req, res) {
   var pathname = url.parse(req.url).pathname;
-  if (pathname === '/')                  root(req, res);
-  else if (pathname === '/save')         save(req, res);
-  else if (pathname === '/channel.html') channel(req, res);
-  else if (pathname === '/mem')          mem(req, res);
-  else                                   memfile(req, res);
+  if      (pathname === '/')             root    (req, res);
+  else if (pathname === '/save')         save    (req, res);
+  else if (pathname === '/channel.html') channel (req, res);
+  else if (pathname === '/mem')          mem     (req, res);
+  else                                   memfile (req, res);
 }
 
 function requestHandler(req, res) {
