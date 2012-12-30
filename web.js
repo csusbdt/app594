@@ -21,6 +21,12 @@ var fb          = require('./fb');
 // For slug size, see https://devcenter.heroku.com/articles/slug-compiler
 // See https://devcenter.heroku.com/articles/s3 for asset storage
 
+// Heroku uses varnish to cache content.  See
+// http://stackoverflow.com/questions/5278206/heroku-spin-up.
+
+// To avoid spin-up of free tier server, see 
+// http://stackoverflow.com/questions/5480337/easy-way-to-prevent-heroku-idling
+
 // Maybe add ETags.  See the following:
 //    http://en.wikipedia.org/wiki/HTTP_ETag
 //    https://github.com/tomgco/gzippo/blob/master/lib/staticGzip.js

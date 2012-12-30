@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>App 594</title>
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/css/bootstrap-combined.min.css" rel="stylesheet">
   </head>
   <body>
     <div id="fb-root"></div>
@@ -25,8 +26,16 @@
       </div>
     </div>
     
-    <script src="js/jquery-1.8.3.min.js"></script>
-    <script>    
+    <div>
+      This app is deployed on a free-tier dyno, 
+      so there will be a long delay when loading the page
+      if the server needs to start up.  The app will idle
+      after one hour of inactivity.
+    </div>
+    
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/js/bootstrap.min.js"></script>
+    <script>
       var app = <%- app %>;
 
       // define app.setView
