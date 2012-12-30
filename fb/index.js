@@ -22,6 +22,7 @@ exports.init = function(cb) {
     res.setEncoding('utf8');
     res.on('end', function() {
       appToken = querystring.parse(result)['access_token'];
+      if (appToken === undefined) cb(new Error('bad app id or secret'));
       cb();
     });
   });

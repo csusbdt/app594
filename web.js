@@ -26,6 +26,12 @@ if (process.env.FACEBOOK_SECRET === undefined) throw new Error('FACEBOOK_SECRET 
 if (process.env.MONGO_URI       === undefined) throw new Error('MONGO_URI not defined');
 if (process.env.PORT            === undefined) throw new Error('PORT not defined');
 
+// Remove spaces that foreman does not take out.
+process.env.FACEBOOK_APP_ID = process.env.FACEBOOK_APP_ID.replace(' ', '');
+process.env.FACEBOOK_SECRET = process.env.FACEBOOK_SECRET.replace(' ', '');
+process.env.MONGO_URI = process.env.MONGO_URI.replace(' ', '');
+process.env.PORT = process.env.PORT.replace(' ', '');
+
 async.parallel(
   [
     function(cb) {

@@ -40,6 +40,12 @@ Install dependencies.
     cd app594
     npm install
 
+Create file __.env__ with the following contents.
+
+FACEBOOK_APP_ID=<your facebook app id>
+FACEBOOK_SECRET=<your facebook app id>
+MONGO_URI=mongodb://localhost:27017/app594d
+
 Start local instance of the app.
 
     foreman start
