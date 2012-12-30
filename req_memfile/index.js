@@ -1,7 +1,10 @@
 var fs = require('fs');
 var async = require('async');
+var zlib = require('zlib');
 
 // This code returns "not found" when '..' appears in the url.
+
+var gzip = zlib.createGzip();
 
 var cache = {},
     mimetype = {
@@ -20,28 +23,72 @@ function getType(filename) {
 
 exports = module.exports = function() { return handleRequest; }
 
-function handleRequest(req, res, next) {  
+function handleRequest(req, res) {  
   var file = cache['public' + req.url];
   if (file === undefined) {
     res.statusCode = 404;
     res.end('not found');
     return;
-  }  
-  res.writeHead(200, {
-    'Content-Type': file.type,
-    'Content-Length': file.data.length,
-    'Pragma': 'public',
-    'Cache-Control': 'max-age=31536000',
-    'Expires': new Date(Date.now() + 31536000).toUTCString()
-  });
-  res.end(file.data);
+  }
+  if (req.headers['accept-encoding'] !== undefined && req.headers['accept-encoding'].indexOf('gzip') !== -1) {
+    res.writeHead(200, {
+      'Content-Type': file.type,
+      'Content-Length': file.gzip.length,
+      'Pragma': 'public',
+      'Cache-Control': 'max-age=31536000',
+      'Expires': new Date(Date.now() + 31536000).toUTCString(),
+      'Content-Encoding': 'gzip',
+      'Vary': 'Accept-Encoding'
+    });
+    res.end(file.gzip);
+  } else {
+    console.log('browser does not accept gzip');
+    res.writeHead(200, {
+      'Content-Type': file.type,
+      'Content-Length': file.data.length,
+      'Pragma': 'public',
+      'Cache-Control': 'max-age=31536000',
+      'Expires': new Date(Date.now() + 31536000).toUTCString()
+    });
+    res.end(file.data);
+  }
 };
+
+function compress(data, cb) {
+  zlib.gzip(data, function(err, result) {
+    if (err) cb(err);
+    else cb(result);
+  });
+}
 
 // Read files into memory.
 exports.init = function(cb) {
   readDir('public', function(err) {
     if (err) cb(err);
-    else cb();
+    // Create the gzip versions of each file.    
+    // Do this sequentially to avoid going into swap memory.
+    async.forEachSeries(
+      Object.keys(cache), 
+      function(filename, cb) {
+        compress(cache[filename].data, function(result) {
+          if (result instanceof Error) return cb(result);
+          cache[filename].gzip = result;
+          cb();
+        });
+      },
+      function(err) {
+        if (err) return cb(err); 
+        // Calculate and display memory consumption.
+        var filename, uncompressed = 0, compressed = 0;
+        for (filename in cache) {
+          uncompressed += cache[filename].data.length;
+          compressed += cache[filename].gzip.length;
+        }
+        console.log('memfile bytes, uncompressed: ' + Math.ceil(uncompressed / 1024 / 1024) + ' MB');
+        console.log('memfile bytes, compressed:   ' + Math.ceil(compressed / 1024 / 1024) + ' MB');
+        cb();
+      }
+    );
   });
 };
 
