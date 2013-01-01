@@ -1,10 +1,6 @@
 var channelDoc = '<script src="//connect.facebook.net/en_US/all.js"></script>';
 
-exports = module.exports = function() {
-  return channel;
-};
-
-function channel(req, resp) {
+exports.handle = function(req, resp) {
   res.writeHead(200, {
     'Content-Type': 'text/html',
     'Content-Length': channelDoc.length,

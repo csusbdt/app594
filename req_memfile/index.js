@@ -21,15 +21,17 @@ function getType(filename) {
   return mimetype[filename.substr(i + 1)];
 }
 
-exports = module.exports = function() { return handleRequest; }
-
-function handleRequest(req, res) {  
+exports.handle = function(req, res) {  
   var file = cache['public' + req.url];
   if (file === undefined) {
     res.statusCode = 404;
     res.end('not found');
     return;
   }
+  console.log('------------------');
+  console.log(req.url);
+  console.log(JSON.stringify(req.headers));
+  console.log(req.headers['accept-encoding']);
   if (file.gzip !== undefined && 
       req.headers['accept-encoding'] !== undefined && 
       req.headers['accept-encoding'].indexOf('gzip') !== -1) {
@@ -65,12 +67,13 @@ function compress(data, cb) {
   });
 }
 
-// Read files into memory.  Do not compress ogg and mp3.
+// Read files into memory.
 exports.init = function(cb) {
   readDir('public', function(err) {
-    if (err) cb(err);
-    // Create the gzip versions of each file.    
+    if (err) return cb(err);
+    // Create the gzip versions of each file.
     // Do this sequentially to avoid going into swap memory.
+    // Do not compress ogg and mp3.
     async.forEachSeries(
       Object.keys(cache), 
       function(filename, cb) {
@@ -78,7 +81,7 @@ exports.init = function(cb) {
         compress(cache[filename].data, function(result) {
           if (result instanceof Error) return cb(result);
           cache[filename].gzip = result;
-          cb();
+          return cb();
         });
       },
       function(err) {
@@ -91,7 +94,7 @@ exports.init = function(cb) {
         }
         console.log('memfile bytes, uncompressed: ' + Math.ceil(uncompressed / 1024 / 1024) + ' MB');
         console.log('memfile bytes, compressed:   ' + Math.ceil(compressed / 1024 / 1024) + ' MB');
-        cb();
+        return cb();
       }
     );
   });

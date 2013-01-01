@@ -79,6 +79,4 @@ exports.exchangeAccessToken = function(accessToken, cb) {
       expires: new Date(Date.now() + data.expires * 1000)
     });
   });
-  req.on('error', function(e) { cb(e); });
-  req.end();
 };

@@ -1,8 +1,4 @@
-exports = module.exports = function() {
-  return mem;
-}
-
-function mem(req, res) {
+exports.handle = function(req, res) {
   var usage = process.memoryUsage(),
       page = '<p>Heroku limit = 512 MB</p>' + 
              '<p>rss = '       + Math.ceil(usage.rss       / 1024 / 1024) + ' MB</p>' +  

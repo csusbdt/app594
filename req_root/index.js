@@ -9,10 +9,6 @@ var fb = require('../fb');
 var loginPage,
     gamePageTemplate;
 
-exports = module.exports = function() {
-  return handleRootRequest;
-}
-
 exports.init = function(cb) {
   fs.readFile('views/login.ejs', 'utf8', function(err, file) {
     if (err) return cb(err);
@@ -31,11 +27,18 @@ function error(req, res, err) {
   res.end(err.message);
 }
 
-function handleRootRequest(req, res) {
+exports.redirectHome = function(req, res) {
+  res.writeHead(302, {
+    'Location': '/home'
+  });
+  res.end();
+};
+
+exports.handle = function(req, res) {
   var userCredentials = cookie.extract(req);
   if (userCredentials) {
     processUserCredentials(req, res, userCredentials);
-  } else if (req.url.substr(0, 2) === '/?') {
+  } else if (req.url.substr(0, 6) === '/home?') {
     processShortLivedToken(req, res);
   } else {
     returnLoginPage(req, res);
@@ -65,7 +68,7 @@ function returnGamePage(req, res, user) {
       'Content-Length': page.length,
       'Pragma': 'no-cache',
       'Cache-Control': 'no-cache, no-store',
-      'Set-Cookie': cookie(user)
+      'Set-Cookie': cookie.get(user)
     });
     res.end(page);
   });
@@ -94,7 +97,7 @@ function processShortLivedToken(req, res) {
     query = {};
   }
   if (query.token === undefined || query.uid === undefined) {
-    res.redirect('/');  // clear out bad query
+    redirectHome(req, res);  // clear out bad query
     return;
   }
   user.uid = query.uid;

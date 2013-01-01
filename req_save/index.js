@@ -3,16 +3,12 @@ var cookie = require('../app_cookie');
 var game = require('../game');
 var ajax = require('../app_ajax');
 
-exports = module.exports = function() {
-  return req_save;
-};
-
 function error(res, err) {
   console.error('req_save: ' + err.message);
   res.end(500, { error: err.message });
 }
 
-function req_save(req, res) {
+exports.handle = function(req, res) {
   ajax.parse(req, function(data) {
     if (data instanceof Error) {
       console.log('req_save: failed to parse incoming data: ' + data.message);
