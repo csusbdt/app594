@@ -4,8 +4,6 @@ var zlib = require('zlib');
 
 // This code returns "not found" when '..' appears in the url.
 
-var gzip = zlib.createGzip();
-
 var cache = {},
     mimetype = {
       'png'  : 'image/png',
@@ -13,6 +11,8 @@ var cache = {},
       'css'  : 'text/css',
       'ico'  : 'image/x-icon',
       'html' : 'text/html',
+      'ogg' : 'audio/ogg',
+      'mp3' : 'audio/mp3'
     };
 
 function getType(filename) {
@@ -30,7 +30,9 @@ function handleRequest(req, res) {
     res.end('not found');
     return;
   }
-  if (req.headers['accept-encoding'] !== undefined && req.headers['accept-encoding'].indexOf('gzip') !== -1) {
+  if (file.gzip !== undefined && 
+      req.headers['accept-encoding'] !== undefined && 
+      req.headers['accept-encoding'].indexOf('gzip') !== -1) {
     res.writeHead(200, {
       'Content-Type': file.type,
       'Content-Length': file.gzip.length,
@@ -42,7 +44,8 @@ function handleRequest(req, res) {
     });
     res.end(file.gzip);
   } else {
-    console.log('browser does not accept gzip');
+    console.log('req_memfile: browser does not accept gzip');
+    console.log('req_memfile: browser accepts ' + req.headers['accept-encoding']);
     res.writeHead(200, {
       'Content-Type': file.type,
       'Content-Length': file.data.length,
@@ -55,13 +58,14 @@ function handleRequest(req, res) {
 };
 
 function compress(data, cb) {
+//  var gzip = zlib.createGzip();
   zlib.gzip(data, function(err, result) {
     if (err) cb(err);
     else cb(result);
   });
 }
 
-// Read files into memory.
+// Read files into memory.  Do not compress ogg and mp3.
 exports.init = function(cb) {
   readDir('public', function(err) {
     if (err) cb(err);
@@ -70,6 +74,7 @@ exports.init = function(cb) {
     async.forEachSeries(
       Object.keys(cache), 
       function(filename, cb) {
+        if (cache[filename].type === 'audio/ogg' || cache[filename].type !== 'audio/mp3') return cb();
         compress(cache[filename].data, function(result) {
           if (result instanceof Error) return cb(result);
           cache[filename].gzip = result;
@@ -82,7 +87,7 @@ exports.init = function(cb) {
         var filename, uncompressed = 0, compressed = 0;
         for (filename in cache) {
           uncompressed += cache[filename].data.length;
-          compressed += cache[filename].gzip.length;
+          if (cache[filename].gzip !== undefined) compressed += cache[filename].gzip.length;
         }
         console.log('memfile bytes, uncompressed: ' + Math.ceil(uncompressed / 1024 / 1024) + ' MB');
         console.log('memfile bytes, compressed:   ' + Math.ceil(compressed / 1024 / 1024) + ' MB');
