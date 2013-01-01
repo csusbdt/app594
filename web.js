@@ -1,3 +1,4 @@
+var http       = require('http');
 var async       = require('async');
 
 var server      = require('./server');
@@ -41,6 +42,9 @@ process.env.FACEBOOK_APP_ID = process.env.FACEBOOK_APP_ID.replace(' ', '');
 process.env.FACEBOOK_SECRET = process.env.FACEBOOK_SECRET.replace(' ', '');
 process.env.MONGO_URI = process.env.MONGO_URI.replace(' ', '');
 process.env.PORT = process.env.PORT.replace(' ', '');
+
+// Allow node to cache a lot of socket connections to Facebook.
+http.globalAgent.maxSockets = Infinity;
 
 async.parallel(
   [

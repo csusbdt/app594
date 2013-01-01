@@ -33,6 +33,10 @@
       after one hour of inactivity.
     </div>
     
+    <div>
+      Need to add code to re-auth with Facebook if secret is bad on save operation.
+    </div>
+    
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
     <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/js/bootstrap.min.js"></script>
     <script>
@@ -53,15 +57,15 @@
         app.setView('updating-view');
         $.ajax({
           url: '/save',
-          data: {
+          data: JSON.stringify({
             uid: app.uid,
             secret: app.secret,
-            gameState: JSON.stringify(app.gameState)
-          }
+            gameState: app.gameState
+          })
         })
         .done(function(data) {
-          if (data.err) {
-            $('#error').html(data.err);
+          if (data.error) {
+            $('#error').html(data.error);
             app.setView('error-view');
           } else if (data.login) {
             $('#error').html('need to login into facebook again');
@@ -84,7 +88,8 @@
 					global: false,
 					type: "POST",
 					dataType: 'json',
-					cache: false  // appends a timstamp onto urls to bust caching; needed for iOS?
+					contentType: 'application/json; charset=utf-8',
+					cache: false 
 				});
 				
 				$('#number').html(app.gameState.number);
