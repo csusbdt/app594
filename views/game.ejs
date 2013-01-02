@@ -37,8 +37,11 @@
       Need to add code to re-auth with Facebook if secret is bad on save operation.
     </div>
     
+    <div id="friends">
+    </div>
+    
     <div>
-      Audio is not currently cached by chrome -- will try localstorage solution.
+      Audio is not currently cached by chrome -- will try cached datauri and maybe localstorage.
     </div>
 
     <button onclick="playClick()">click</button>
@@ -135,6 +138,36 @@
         });
         
         $('#picture').attr('src', 'http://graph.facebook.com/' + app.uid + '/picture?type=normal');
+        
+        // Get the friends list.
+        
+        var qs = 'SELECT+name,+pic_square,+is_app_user+FROM+user+WHERE+uid+IN+(SELECT+uid2+FROM+friend+WHERE+uid1+=+me())';        
+        $.ajax({
+          url: 'https://graph.facebook.com/fql?q=' + qs + '&access_token=' + app.secret,
+//          url: 'https://graph.facebook.com/fql?q=SELECT+uid2+FROM+friend+WHERE+uid1=me()&access_token=' + app.secret,
+          type: "GET",
+					dataType: 'json'
+        })
+        .done(function(data) {
+          if (data.data === undefined) {
+            $('#error').html('data.data is undefined');
+            app.setView('error-view');
+            return;
+          }
+          data.data.forEach(function(friend) {
+            var $div = $('<div></div>');
+            $div.append('<span>' + friend.name + '</span>');
+            $div.append('<img src="' + friend.pic_square + '"/>');
+            $div.append('<span>' + friend.is_app_user + '</span>');
+            $('#friends').append($div);
+          });
+        })
+        .fail(function(jqXHR, textStatus) {
+          console.log('textStatus: ' + textStatus);
+          console.log(jqXHR);
+          $('#error').html(textStatus);
+          app.setView('error-view');
+        });
       });
     </script>
 

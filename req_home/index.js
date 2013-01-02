@@ -102,7 +102,10 @@ function processShortLivedToken(req, res) {
   }
   user.uid = query.uid;
   fb.exchangeAccessToken(query.token, function(result) {
-    if (result instanceof Error) return error(req, res, result);
+    if (result instanceof Error) {
+      data.message += '\nreq_home: processShortLivedToken: Failed.'
+      return error(req, res, result);
+    }
     user.secret = result.secret; 
     user.expires = result.expires;
     game.saveSecret(user, function(err) {
