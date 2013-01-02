@@ -5,7 +5,7 @@
     <title>App 594</title>
     <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/css/bootstrap-combined.min.css" rel="stylesheet">
   </head>
-  <body>
+  <body onload="onload()">
     <div id="fb-root"></div>
 
     <div id="updating-view" style="display: none">
@@ -37,70 +37,34 @@
       Need to add code to re-auth with Facebook if secret is bad on save operation.
     </div>
     
-<button onclick="playClick()">click</button>
-<button onclick="playBuzzbeep()">buzz beep</button>
-<button onclick="playBeep()">beep</button>
+    <div>
+      Audio is not currently cached by chrome -- will try localstorage solution.
+    </div>
+
+    <button onclick="playClick()">click</button>
+        
+    <audio id="click-sound" preload="auto">
+      <source src="snd/Button_C-J_Fairba-8445_hifi.ogg" type="audio/ogg">
+      <source src="snd/Button_C-J_Fairba-8445_hifi.mp3" type="audio/mpeg">
+    </audio>
     
-<audio id="click-sound" preload="auto">
-  <source src="snd/Button_C-J_Fairba-8445_hifi.ogg" type="audio/ogg">
-  <source src="snd/Button_C-J_Fairba-8445_hifi.mp3" type="audio/mpeg">
-</audio>
-
-<audio id="buzzbeep-sound" preload="auto">
-  <source src="snd/Button_B-socreati-8992_hifi.ogg" type="audio/ogg">
-  <source src="snd/Button_B-socreati-8992_hifi.mp3" type="audio/mpeg">
-</audio>
-
-<audio id="beep-sound" preload="auto">
-  <source src="snd/Electro_-S_Bainbr-7955_hifi.ogg" type="audio/ogg">
-  <source src="snd/Electro_-S_Bainbr-7955_hifi.mp3" type="audio/mpeg">
-</audio>
-
-<script>
-function onload() {
-	document.getElementById('click-sound').volume = 0;
-	document.getElementById('click-sound').currentTime = 0;
-	document.getElementById('click-sound').play();
-	
-	document.getElementById('buzzbeep-sound').volume = 0;
-	document.getElementById('buzzbeep-sound').currentTime = 0;
-	document.getElementById('buzzbeep-sound').play();
-	
-	document.getElementById('beep-sound').volume = 0;
-	document.getElementById('beep-sound').currentTime = 0;
-	document.getElementById('beep-sound').play();	
-}
-
-function playClick() {
-	document.getElementById('click-sound').volume = 1;
-	document.getElementById('click-sound').currentTime = 0;
-	document.getElementById('click-sound').play();
-}
-
-function playBuzzbeep() {
-	document.getElementById('buzzbeep-sound').volume = 1;
-	document.getElementById('buzzbeep-sound').currentTime = 0;
-	document.getElementById('buzzbeep-sound').play();
-}
-
-function playBeep() {
-	document.getElementById('beep-sound').volume = 1;
-	document.getElementById('beep-sound').currentTime = 0;
-	document.getElementById('beep-sound').play();
-}
-
-/*
-	      document.getElementById('buzzbeep-snd').addEventListener('click', function() { play('buzzbeep'); });
-		      
-	      window.play = function(snd, vol) {  // vol defaults to 1
-	        var snd = document.getElementById(snd + '-snd');
-          snd.volume = vol === undefined ? 1 : 0;
-	        snd.currentTime = 0;
-	        snd.play();
-        };
-*/        
-
-</script>    
+    <script>
+      function onload() {
+        document.getElementById('click-sound').volume = 0;
+        document.getElementById('click-sound').currentTime = 0;
+        document.getElementById('click-sound').play();
+      }
+      
+      function playClick() {
+      if (window.chrome) {
+        document.getElementById('click-sound').load();
+      } else {
+        document.getElementById('click-sound').currentTime = 0;
+      }
+        document.getElementById('click-sound').volume = 1;
+        document.getElementById('click-sound').play();
+      }
+    </script>    
     
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
     <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/js/bootstrap.min.js"></script>

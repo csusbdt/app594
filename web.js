@@ -2,7 +2,7 @@ var http       = require('http');
 var async       = require('async');
 
 var server      = require('./server');
-var req_root    = require('./req_root');
+var req_root    = require('./req_home');
 var req_memfile = require('./req_memfile');
 var game        = require('./game');
 var fb          = require('./fb');

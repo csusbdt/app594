@@ -28,10 +28,6 @@ exports.handle = function(req, res) {
     res.end('not found');
     return;
   }
-  console.log('------------------');
-  console.log(req.url);
-  console.log(JSON.stringify(req.headers));
-  console.log(req.headers['accept-encoding']);
   if (file.gzip !== undefined && 
       req.headers['accept-encoding'] !== undefined && 
       req.headers['accept-encoding'].indexOf('gzip') !== -1) {
@@ -46,8 +42,6 @@ exports.handle = function(req, res) {
     });
     res.end(file.gzip);
   } else {
-    console.log('req_memfile: browser does not accept gzip');
-    console.log('req_memfile: browser accepts ' + req.headers['accept-encoding']);
     res.writeHead(200, {
       'Content-Type': file.type,
       'Content-Length': file.data.length,
