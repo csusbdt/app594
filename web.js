@@ -59,8 +59,8 @@ async.parallel(
       });
     },
     function(cb) {
-      fb.init(function(err) { 
-        if (err) cb(err); else cb();
+      fb.init(function(appToken) { 
+        if (appToken instanceof Error) cb(appToken); else cb();
       });
     },
     function(cb) {
@@ -70,7 +70,7 @@ async.parallel(
     }
   ],
   function(err, result) {
-    if (err) return console.log(err);
+    if (err) return console.log(err.message);
     server.start();
   }
 );

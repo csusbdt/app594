@@ -54,16 +54,18 @@
     <script>
       function onload() {
         document.getElementById('click-sound').volume = 0;
-        document.getElementById('click-sound').currentTime = 0;
+        try {
+          document.getElementById('click-sound').currentTime = 0;
+        } catch(err) {}; // invalid state error
         document.getElementById('click-sound').play();
       }
       
       function playClick() {
-      if (window.chrome) {
-        document.getElementById('click-sound').load();
-      } else {
-        document.getElementById('click-sound').currentTime = 0;
-      }
+        if (window.chrome) {
+          document.getElementById('click-sound').load();
+        } else {
+          document.getElementById('click-sound').currentTime = 0;
+        }
         document.getElementById('click-sound').volume = 1;
         document.getElementById('click-sound').play();
       }
@@ -114,6 +116,10 @@
           app.setView('error-view');
         });
       };
+      
+      app.invite = function(uid) {
+        alert(uid + ' will be invited.');
+      };
 
       $(function() {
 				$.ajaxSetup({
@@ -141,10 +147,9 @@
         
         // Get the friends list.
         
-        var qs = 'SELECT+name,+pic_square,+is_app_user+FROM+user+WHERE+uid+IN+(SELECT+uid2+FROM+friend+WHERE+uid1+=+me())';        
+        var qs = 'SELECT+uid,+name,+pic_square,+is_app_user+FROM+user+WHERE+uid+IN+(SELECT+uid2+FROM+friend+WHERE+uid1+=+me())';        
         $.ajax({
           url: 'https://graph.facebook.com/fql?q=' + qs + '&access_token=' + app.secret,
-//          url: 'https://graph.facebook.com/fql?q=SELECT+uid2+FROM+friend+WHERE+uid1=me()&access_token=' + app.secret,
           type: "GET",
 					dataType: 'json'
         })
@@ -158,7 +163,11 @@
             var $div = $('<div></div>');
             $div.append('<span>' + friend.name + '</span>');
             $div.append('<img src="' + friend.pic_square + '"/>');
-            $div.append('<span>' + friend.is_app_user + '</span>');
+            if (friend.is_app_user) {
+              $div.append('<span>I\'m an app user!</span>');
+            } else {
+              $div.append('<span onclick="app.invite(' + friend.uid + ')">Invite me.</div>');
+            }
             $('#friends').append($div);
           });
         })
