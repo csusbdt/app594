@@ -24,32 +24,15 @@ function getExt(filename) {
 exports.init = function(cb) {
   readDir('public', function(err) {
     if (err) return cb(err);
-    // Create the gzip versions of each file.
-    // Do this sequentially to avoid swap memory.
-    async.forEachSeries(
-      Object.keys(cache),
-      function(filename, cb) {
-        var ext = getExt(filename);
-        if (cache[filename].type === 'audio/ogg' || cache[filename].type !== 'audio/mp3') return cb();
-        compress(cache[filename].data, function(result) {
-          if (result instanceof Error) return cb(result);
-          cache[filename].gzip = result;
-          return cb();
-        });
-      },
-      function(err) {
-        if (err) return cb(err); 
-        // Calculate and display memory consumption.
-        var filename, uncompressed = 0, compressed = 0;
-        for (filename in cache) {
-          uncompressed += cache[filename].data.length;
-          if (cache[filename].gzip !== undefined) compressed += cache[filename].gzip.length;
-        }
-        console.log('memfile bytes, uncompressed: ' + Math.ceil(uncompressed / 1024 / 1024) + ' MB');
-        console.log('memfile bytes, compressed:   ' + Math.ceil(compressed / 1024 / 1024) + ' MB');
-        return cb();
-      }
-    );
+    // Calculate and display memory consumption.
+    var filename, uncompressed = 0, compressed = 0;
+    for (filename in cache) {
+      uncompressed += cache[filename].data.length;
+      if (cache[filename].gzip !== undefined) compressed += cache[filename].gzip.length;
+    }
+    console.log('memfile bytes, uncompressed: ' + Math.ceil(uncompressed / 1024 / 1024) + ' MB');
+    console.log('memfile bytes, compressed:   ' + Math.ceil(compressed / 1024 / 1024) + ' MB');
+    return cb();
   });
 };
 
@@ -61,7 +44,7 @@ function readDir(dir, cb) {
       return dir + '/' + filename;
     });
     async.forEach(pathnames, readFile, function(err) {
-      if (err) cb(err);   //
+      if (err) cb(err);   // TODO(turner) investigate the following
       else cb();          // I think it's OK to just call cb(err) because cb(undefined) is OK
     });
   });
@@ -94,7 +77,7 @@ function readFile2(pathname, cb) {
   }
   fs.readFile(pathname, function (err, data) {
     if (err) return cb(err);
-    cache[pathname] = {
+    cache[pathname.substr(6)] = {
       type: getExt(pathname),
       data: data
     };
@@ -107,15 +90,15 @@ function readFile2(pathname, cb) {
 
 function readFile3(pathname, cb) {
   if (getExt(pathname).gzip === false) return cb();
-  zlib.gzip(cache[pathname].data, function(err, result) {
+  zlib.gzip(cache[pathname.substr(6)].data, function(err, result) {
     if (err) return cb(err);
-    cache[pathname].gzip = result;
+    cache[pathname.substr(6)].gzip = result;
     return cb();
   });
 }
 
-exports.handle = function(req, res) {  
-  var file = cache['public' + req.url];
+exports.handle = function(req, res) {
+  var file = cache[req.url];
   if (file === undefined) {
     res.statusCode = 404;
     res.end('not found');
