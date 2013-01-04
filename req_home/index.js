@@ -9,7 +9,9 @@ var fb = require('../fb');
 var loginPage,
     gamePageTemplate;
 
+// cb = function(err)
 exports.init = function(cb) {
+  // Read login page into memory
   fs.readFile('views/login.ejs', 'utf8', function(err, file) {
     if (err) return cb(err);
     loginPage = ejs.render(file, { locals: { appId: process.env.FACEBOOK_APP_ID } });

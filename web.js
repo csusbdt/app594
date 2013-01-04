@@ -7,6 +7,14 @@ var req_memfile = require('./req_memfile');
 var game        = require('./game');
 var fb          = require('./fb');
 
+// TODO(turner) minify js and css as part of deployment process
+
+// TODO(turner) use binary search in req_memfile
+
+// See the following for fixes to character set conversion issues.
+// https://gist.github.com/2024272
+// http://ecmanaut.blogspot.com/2006/07/encoding-decoding-utf8-in-javascript.html
+
 // http://www.smashingboxes.com/heroku-vs-amazon-web-services/
 // See http://policy.heroku.com/aup for limits on RAM and storage
 // For caching files, use http://nodejs.org/api/process.html#process_process_memoryusage
