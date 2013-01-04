@@ -1,6 +1,6 @@
-var channelDoc = '<script src="//connect.facebook.net/en_US/all.js"></script>';
+var channelDoc = new Buffer('<script src="//connect.facebook.net/en_US/all.js"></script>').toString('utf-8');
 
-exports.handle = function(req, resp) {
+exports.handle = function(req, res) {
   res.writeHead(200, {
     'Content-Type': 'text/html',
     'Content-Length': channelDoc.length,
