@@ -30,7 +30,7 @@ function insert(file) {
   files[i] = file;
 }
 
-// return file or throw exception
+// return file or null
 function find(filename) {
   // locate file using binary search
   var s = 0, 
@@ -42,7 +42,7 @@ function find(filename) {
     else if (files[m].name > filename) e = m - 1;
     else return files[m];
   }
-  throw new Error('req_memfile.insert: file not found');
+  return null;
 }
 
 function getExt(filename) {
@@ -124,7 +124,7 @@ function readFile2(filename, cb) {
 
 exports.handle = function(req, res) {
   var file = find(req.url);
-  if (file === undefined) {
+  if (file === null) {
     res.statusCode = 404;
     res.end('not found');
     return;
