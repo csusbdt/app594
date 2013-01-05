@@ -9,8 +9,6 @@ var fb          = require('./fb');
 
 // TODO(turner) minify js and css as part of deployment process
 
-// TODO(turner) use binary search in req_memfile
-
 // See the following for fixes to character set conversion issues.
 // https://gist.github.com/2024272
 // http://ecmanaut.blogspot.com/2006/07/encoding-decoding-utf8-in-javascript.html
@@ -22,23 +20,18 @@ var fb          = require('./fb');
 
 // See the following for performance tips.
 // http://engineering.linkedin.com/nodejs/blazing-fast-nodejs-10-performance-tips-linkedin-mobile
-// See the section "2. Turn off socket pooling" in particular.
 
 // Refer to following for caching
 // https://devcenter.heroku.com/articles/increasing-application-performance-with-http-cache-headers
+// Maybe add ETags.  See the following:
+//    http://en.wikipedia.org/wiki/HTTP_ETag
+//    https://github.com/tomgco/gzippo/blob/master/lib/staticGzip.js
 
 // For slug size, see https://devcenter.heroku.com/articles/slug-compiler
 // See https://devcenter.heroku.com/articles/s3 for asset storage
 
 // Heroku uses varnish to cache content.  See
 // http://stackoverflow.com/questions/5278206/heroku-spin-up.
-
-// To avoid spin-up of free tier server, see 
-// http://stackoverflow.com/questions/5480337/easy-way-to-prevent-heroku-idling
-
-// Maybe add ETags.  See the following:
-//    http://en.wikipedia.org/wiki/HTTP_ETag
-//    https://github.com/tomgco/gzippo/blob/master/lib/staticGzip.js
 
 if (process.env.FACEBOOK_APP_ID === undefined) throw new Error('FACEBOOK_APP_ID not defined');
 if (process.env.FACEBOOK_SECRET === undefined) throw new Error('FACEBOOK_SECRET not defined');
