@@ -20,10 +20,12 @@ var files = [],
 function insert(file) {
   // keep files ordered by name so we can use binary search
   files.push(null);
-  var i = file.length - 1;
+  var i = files.length - 1;
+  if (files[i] !== null) console.log('SOMETHING IS WRONG');
   for (; i > 0; --i) {
-    if (files[i - 1].name > file.name) files[i] = files[i - 1];
-    else if (files[i - 1].name === file.name) throw new Error('req_memfile.insert: duplicate insertion');
+    if (files[i - 1].name < file.name) break;
+    if (files[i - 1].name === file.name) throw new Error('req_memfile.insert: duplicate insertion');
+    files[i] = files[i - 1];
   }
   files[i] = file;
 }
@@ -121,7 +123,7 @@ function readFile2(filename, cb) {
 }
 
 exports.handle = function(req, res) {
-  var file = find[req.url];
+  var file = find(req.url);
   if (file === undefined) {
     res.statusCode = 404;
     res.end('not found');
