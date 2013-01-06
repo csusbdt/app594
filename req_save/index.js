@@ -1,6 +1,6 @@
 var querystring = require('querystring');
 var cookie = require('../app_cookie');
-var game = require('../game');
+var model = require('../model');
 var ajax = require('../app_ajax');
 
 function error(res, err) {
@@ -28,7 +28,7 @@ exports.handle = function(req, res) {
       return ajax.error(res);
     }
     user.uid = data.uid;
-    game.getSecret(user, function(err) {
+    model.getSecret(user, function(err) {
       if (err) {
         console.log('req_save: failed to get secret from db: ' + err.message);
         return ajax.error(res);
@@ -38,7 +38,7 @@ exports.handle = function(req, res) {
         return ajax.reply(res, { login: true });
       }
       user.gameState = data.gameState;
-      game.saveGameState(user, function(err) {
+      model.saveGameState(user, function(err) {
         if (err) {
           console.log('req_save: failed to save game state into db: ' + err.message);
           return ajax.error(res);

@@ -2,7 +2,7 @@ var url = require('url');
 var fs = require('fs');
 var ejs = require('ejs');
 
-var game = require('../game');
+var model = require('../model');
 var cookie = require('../app_cookie');
 var fb = require('../fb');
 
@@ -59,7 +59,7 @@ function returnLoginPage(req, res) {
 }
 
 function returnGamePage(req, res, user) {
-  game.getGameState(user, function(err) {
+  model.getGameState(user, function(err) {
     if (err) return error(req, res, err);
     var page = ejs.render(
       gamePageTemplate, 
@@ -79,7 +79,7 @@ function returnGamePage(req, res, user) {
 function processUserCredentials(req, res, userCredentials) {
   var user = {};
   user.uid = userCredentials.uid;
-  game.getSecret(user, function(err) {
+  model.getSecret(user, function(err) {
     if (err) return error(req, res, err);
     if (user.secret === undefined || userCredentials.secret !== user.secret) {
       returnLoginPage(req, res);
@@ -110,7 +110,7 @@ function processShortLivedToken(req, res) {
     }
     user.secret = result.secret; 
     user.expires = result.expires;
-    game.saveSecret(user, function(err) {
+    model.saveSecret(user, function(err) {
       if (err) return error(req, res, result);
       returnGamePage(req, res, user);    
     });
