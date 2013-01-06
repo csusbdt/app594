@@ -4,7 +4,8 @@ var zlib = require('zlib');
 
 // This code returns "not found" when '..' appears in the url.
 
-var files = [],
+var publicDir = 'public',
+    files = [],
     extmap = {
       'png'  : { type: 'image/png',              gzip: true },
       'js'   : { type: 'application/javascript', gzip: true },
@@ -52,7 +53,7 @@ function getExt(filename) {
 }
 
 exports.init = function(cb) {
-  readDir('public', function(err) {
+  readDir(publicDir, function(err) {
     if (err) return cb(err);
     // Calculate and display memory consumption.
     var i, uncompressed = 0, compressed = 0;
@@ -108,7 +109,7 @@ function readFile2(filename, cb) {
   fs.readFile(filename, function (err, data) {
     if (err) return cb(err);
     var file = {
-      name: filename.substr(6),
+      name: filename.substr(publicDir.length),
       type: getExt(filename),
       data: data
     };

@@ -70,7 +70,7 @@ function returnGamePage(req, res, user) {
       'Content-Length': page.length,
       'Pragma': 'no-cache',
       'Cache-Control': 'no-cache, no-store',
-      'Set-Cookie': cookie.get(user)
+      'Set-Cookie': cookie.create(user)
     });
     res.end(page);
   });

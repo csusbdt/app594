@@ -1,6 +1,6 @@
 var appCookieName = 'app594';
 
-exports.get = function(user) {
+exports.create = function(user) {
   return appCookieName + 
          '=' + JSON.stringify({ uid: user.uid, secret: user.secret }) + 
          '; Expires=' + new Date(user.expires).toUTCString() +

@@ -7,15 +7,12 @@ exports.parse = function(req, cb) {
   var dataString;
   req.setEncoding('utf8');
   req.on('data', function (chunk) {
-    if (chunk.length > MAX_BODY) {
-      return cb(new Error('app_ajax.parse: chunk exceeds ' + MAX_BODY));
-    }
     if (dataString === undefined) dataString = chunk; else dataString += chunk;
-  });
-  req.on('end', function() {
     if (dataString.length > MAX_BODY) {
       return cb(new Error('app_ajax.parse: dataString exceeds ' + MAX_BODY));
     }
+  });
+  req.on('end', function() {
     if (dataString === undefined || dataString.length === 0) return cb({});
     try {
       return cb(JSON.parse(dataString));

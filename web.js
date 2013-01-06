@@ -7,8 +7,6 @@ var req_memfile = require('./req_memfile');
 var game        = require('./game');
 var fb          = require('./fb');
 
-// TODO(turner) remove DDN files from public
-
 // TODO(turner) minify js and css as part of deployment process
 
 // See the following for fixes to character set conversion issues.
