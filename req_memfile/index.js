@@ -137,10 +137,10 @@ exports.handle = function(req, res) {
       'Content-Type': file.type,
       'Content-Length': file.gzip.length,
       'Pragma': 'public',
-      'Cache-Control': 'max-age=31536000',
-      'Expires': new Date(Date.now() + 31536000).toUTCString(),
+      'Cache-Control': 'max-age=315360000', // 10 years in seconds
+      'Vary': 'Accept-Encoding',
+      'Expires': new Date(Date.now() + 315360000000).toUTCString(),  // 10 years in milliseconds
       'Content-Encoding': 'gzip',
-      'Vary': 'Accept-Encoding'
     });
     res.end(file.gzip);
   } else {
@@ -148,8 +148,9 @@ exports.handle = function(req, res) {
       'Content-Type': file.type,
       'Content-Length': file.data.length,
       'Pragma': 'public',
-      'Cache-Control': 'max-age=31536000',
-      'Expires': new Date(Date.now() + 31536000).toUTCString()
+      'Cache-Control': 'max-age=315360000',
+      'Vary': 'Accept-Encoding',
+      'Expires': new Date(Date.now() + 315360000000).toUTCString()
     });
     res.end(file.data);
   }

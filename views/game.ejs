@@ -118,7 +118,12 @@
       };
       
       app.invite = function(uid) {
-        alert(uid + ' will be invited.');
+        if (confirm('invite ' + uid + '?')) {
+          alert('invited');
+          //FB.ui({method: 'apprequests', to: to, message: 'You should learn more about this awesome site.', data: 'tracking information for the user'});
+        } else {
+          alert('invitation canceled');
+        }
       };
 
       $(function() {
